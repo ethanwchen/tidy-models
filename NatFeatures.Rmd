@@ -1,0 +1,42 @@
+---
+title: "NatFeatures"
+author: "Natanael Wijaya"
+date: '2022-07-18'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Importing packages
+```{r}
+library(dplyr)
+```
+
+## Load Dataset
+
+```{r}
+train <- read.csv('train.csv')
+```
+
+# Processing Data
+
+```{r}
+pop_nat <- train %>%
+  mutate(kor = .[[92]]/.[[82]]) %>%
+  mutate(viet = .[[94]]/.[[82]]) %>%
+  mutate(asianOther = .[[96]]/.[[82]]) %>%
+  mutate(natHawaii = .[[100]]/.[[98]]) %>%
+  mutate(natCha = .[[102]]/.[[98]]) %>%
+  mutate(natSamoan = .[[104]]/.[[98]]) %>%
+  mutate(natOther = .[[106]]/.[[98]]) %>%
+  mutate(raceOther = .[[108]]/.[[66]]) %>%
+  mutate(twoBlack = .[[112]]/.[[110]]) %>%
+  mutate(twoNative = .[[114]]/.[[110]]) %>%
+  mutate(twoAsian = .[[116]]/.[[110]]) %>%
+  mutate(twoBlackNative = .[[118]]/.[[110]]) %>%
+  mutate(twoOther = 1 - twoBlack - twoNative - twoAsian - twoBlackNative) %>% 
+  select(kor, viet, asianOther, natHawaii, natCha, natSamoan,
+         natOther, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, twoOther)
+```
