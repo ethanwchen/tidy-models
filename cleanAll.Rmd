@@ -10,6 +10,7 @@ train <- read_csv("train.csv")
 trainingCoreData =cbind(train["id"], train["percent_dem"], train["total_votes"], train["0001E"])
 names(trainingCoreData) = c("Id", "percent_dem", "Votes","Pop")
 trainingCoreData = tibble(trainingCoreData)
+trainingCoreData$percent_dem = trainingCoreData$percent_dem * 100
 
 ## AGE
 train <- read_csv("train.csv")
@@ -31,6 +32,7 @@ trainingAge <- train %>%
   select(male, age0, age18, age20, age25, age35,
          age45, age55, age60, age65, age75, age85)
 
+trainingAge = trainingAge*100
 
 ## RACE PART 1 
 train <- read.csv('train.csv')
@@ -68,24 +70,31 @@ trainingRacePt2 <- train %>%
   select(kor, viet, asianOther, natHawaii, natCha, natSamoan,
          natOther, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, twoOther)
 
+trainingRacePt2 = trainingRacePt2*100
+trainingRacePt2
+
 ## EDUCATION 
 train <- read_csv("train.csv")
+TotalPop = train["C01_001E"] + train["C01_006E"]
+
 # % Less than high school graduate
-nohighschool = train["C01_002E"]/train["C01_001E"]  + train["C01_007E"]/train["C01_006E"] + train["C01_008E"]/train["C01_006E"]
+nohighschool = train["C01_002E"]/TotalPop + train["C01_007E"]/TotalPop + train["C01_008E"]/TotalPop
 
 # High school graduate (includes equivalency)
-highschool = train["C01_003E"]/train["C01_001E"] + train["C01_009E"]/train["C01_006E"]
+highschool = train["C01_003E"]/TotalPop + train["C01_009E"]/TotalPop
 
 # Some college or associate's degree
-somecollege = train["C01_004E"]/train["C01_001E"] + train["C01_010E"]/train["C01_006E"] + train["C01_011E"]/train["C01_006E"]
+somecollege = train["C01_004E"]/TotalPop + train["C01_010E"]/TotalPop + train["C01_011E"]/TotalPop
 
 # Bachelor's degree or higher
-bachelorsorhigher = train["C01_005E"]/train["C01_001E"] + train["C01_012E"]/train["C01_006E"] + train["C01_013E"]/train["C01_006E"]
+bachelorsorhigher = train["C01_005E"]/TotalPop + train["C01_012E"]/TotalPop + train["C01_013E"]/TotalPop
 
 trainingEdu = cbind(nohighschool,highschool,somecollege,bachelorsorhigher)
 names(trainingEdu) = c("nohighschool", "highschool", "somecollege", "bachelorsorhigher")
 trainingEdu = tibble(trainingEdu)
+trainingEdu = trainingEdu*100
 
 finalTrain = tibble(cbind(trainingCoreData, trainingAge, trainingRacePt1, trainingRacePt2, trainingEdu))
+round(finalTrain,8)
 finalTrain
 ```
