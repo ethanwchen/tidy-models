@@ -2,7 +2,8 @@
 library(tidyverse)
 library(tidymodels)
 library(dlookr)
-# tidymodels_prefer()
+tidymodels_prefer()
+
 ## Full clean
 
 ## GENERAL INFORMATION

@@ -1,0 +1,216 @@
+﻿COL_CODE,DESCRIPTION
+Id,"Identification number needed for solution submission, not a predictor of any kind"
+percent_dem,Percent voters who voted Biden
+total_votes,Total Votes Cast
+0001E,Estimate!!Total population
+0002E,Estimate!!Total population!!Male
+0002PE,Percent!!Total population!!Male
+0003E,Estimate!!Total population!!Female
+0003PE,Percent!!Total population!!Female
+0005E,Estimate!!Total population!!Under 5 years
+0005PE,Percent!!Total population!!Under 5 years
+0006E,Estimate!!Total population!!5 to 9 years
+0006PE,Percent!!Total population!!5 to 9 years
+0007E,Estimate!!Total population!!10 to 14 years
+0007PE,Percent!!Total population!!10 to 14 years
+0008E,Estimate!!Total population!!15 to 19 years
+0008PE,Percent!!Total population!!15 to 19 years
+0009E,Estimate!!Total population!!20 to 24 years
+0009PE,Percent!!Total population!!20 to 24 years
+0010E,Estimate!!Total population!!25 to 34 years
+0010PE,Percent!!Total population!!25 to 34 years
+0011E,Estimate!!Total population!!35 to 44 years
+0011PE,Percent!!Total population!!35 to 44 years
+0012E,Estimate!!Total population!!45 to 54 years
+0012PE,Percent!!Total population!!45 to 54 years
+0013E,Estimate!!Total population!!55 to 59 years
+0013PE,Percent!!Total population!!55 to 59 years
+0014E,Estimate!!Total population!!60 to 64 years
+0014PE,Percent!!Total population!!60 to 64 years
+0015E,Estimate!!Total population!!65 to 74 years
+0015PE,Percent!!Total population!!65 to 74 years
+0016E,Estimate!!Total population!!75 to 84 years
+0016PE,Percent!!Total population!!75 to 84 years
+0017E,Estimate!!Total population!!85 years and over
+0017PE,Percent!!Total population!!85 years and over
+0018E,Estimate!!Total population!!Median age (years)
+0019E,Estimate!!Total population!!Under 18 years
+0019PE,Percent!!Total population!!Under 18 years
+0020E,Estimate!!Total population!!16 years and over
+0020PE,Percent!!Total population!!16 years and over
+0021E,Estimate!!Total population!!18 years and over
+0021PE,Percent!!Total population!!18 years and over
+0022E,Estimate!!Total population!!21 years and over
+0022PE,Percent!!Total population!!21 years and over
+0023E,Estimate!!Total population!!62 years and over
+0023PE,Percent!!Total population!!62 years and over
+0024E,Estimate!!Total population!!65 years and over
+0024PE,Percent!!Total population!!65 years and over
+0025E,Estimate!!Total population!!18 years and over
+0025PE,Percent!!Total population!!18 years and over
+0026E,Estimate!!Total population!!18 years and over!!Male
+0026PE,Percent!!Total population!!18 years and over!!Male
+0027E,Estimate!!Total population!!18 years and over!!Female
+0027PE,Percent!!Total population!!18 years and over!!Female
+0029E,Estimate!!Total population!!65 years and over
+0029PE,Percent!!Total population!!65 years and over
+0030E,Estimate!!Total population!!65 years and over!!Male
+0030PE,Percent!!Total population!!65 years and over!!Male
+0031E,Estimate!!Total population!!65 years and over!!Female
+0031PE,Percent!!Total population!!65 years and over!!Female
+0033E,Estimate!!Total population
+0033PE,Percent!!Total population
+0034E,Estimate!!Total population!!One race
+0034PE,Percent!!Total population!!One race
+0035E,Estimate!!Total population!!Two or more races
+0035PE,Percent!!Total population!!Two or more races
+0036E,Estimate!!Total population!!One race
+0036PE,Percent!!Total population!!One race
+0037E,Estimate!!Total population!!One race!!White
+0037PE,Percent!!Total population!!One race!!White
+0038E,Estimate!!Total population!!One race!!Black or African American
+0038PE,Percent!!Total population!!One race!!Black or African American
+0039E,Estimate!!Total population!!One race!!American Indian and Alaska Native
+0039PE,Percent!!Total population!!One race!!American Indian and Alaska Native
+0040E,Estimate!!Total population!!One race!!American Indian and Alaska Native!!Cherokee tribal grouping
+0040PE,Percent!!Total population!!One race!!American Indian and Alaska Native!!Cherokee tribal grouping
+0041E,Estimate!!Total population!!One race!!American Indian and Alaska Native!!Chippewa tribal grouping
+0041PE,Percent!!Total population!!One race!!American Indian and Alaska Native!!Chippewa tribal grouping
+0042E,Estimate!!Total population!!One race!!American Indian and Alaska Native!!Navajo tribal grouping
+0042PE,Percent!!Total population!!One race!!American Indian and Alaska Native!!Navajo tribal grouping
+0043E,Estimate!!Total population!!One race!!American Indian and Alaska Native!!Sioux tribal grouping
+0043PE,Percent!!Total population!!One race!!American Indian and Alaska Native!!Sioux tribal grouping
+0044E,Estimate!!Total population!!One race!!Asian
+0044PE,Percent!!Total population!!One race!!Asian
+0045E,Estimate!!Total population!!One race!!Asian!!Asian Indian
+0045PE,Percent!!Total population!!One race!!Asian!!Asian Indian
+0046E,Estimate!!Total population!!One race!!Asian!!Chinese
+0046PE,Percent!!Total population!!One race!!Asian!!Chinese
+0047E,Estimate!!Total population!!One race!!Asian!!Filipino
+0047PE,Percent!!Total population!!One race!!Asian!!Filipino
+0048E,Estimate!!Total population!!One race!!Asian!!Japanese
+0048PE,Percent!!Total population!!One race!!Asian!!Japanese
+0049E,Estimate!!Total population!!One race!!Asian!!Korean
+0049PE,Percent!!Total population!!One race!!Asian!!Korean
+0050E,Estimate!!Total population!!One race!!Asian!!Vietnamese
+0050PE,Percent!!Total population!!One race!!Asian!!Vietnamese
+0051E,Estimate!!Total population!!One race!!Asian!!Other Asian
+0051PE,Percent!!Total population!!One race!!Asian!!Other Asian
+0052E,Estimate!!Total population!!One race!!Native Hawaiian and Other Pacific Islander
+0052PE,Percent!!Total population!!One race!!Native Hawaiian and Other Pacific Islander
+0053E,Estimate!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Native Hawaiian
+0053PE,Percent!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Native Hawaiian
+0054E,Estimate!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Chamorro
+0054PE,Percent!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Chamorro
+0055E,Estimate!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Samoan
+0055PE,Percent!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Samoan
+0056E,Estimate!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Other Pacific Islander
+0056PE,Percent!!Total population!!One race!!Native Hawaiian and Other Pacific Islander!!Other Pacific Islander
+0057E,Estimate!!Total population!!One race!!Some other race
+0057PE,Percent!!Total population!!One race!!Some other race
+0058E,Estimate!!Total population!!Two or more races
+0058PE,Percent!!Total population!!Two or more races
+0059E,Estimate!!Total population!!Two or more races!!White and Black or African American
+0059PE,Percent!!Total population!!Two or more races!!White and Black or African American
+0060E,Estimate!!Total population!!Two or more races!!White and American Indian and Alaska Native
+0060PE,Percent!!Total population!!Two or more races!!White and American Indian and Alaska Native
+0061E,Estimate!!Total population!!Two or more races!!White and Asian
+0061PE,Percent!!Total population!!Two or more races!!White and Asian
+0062E,Estimate!!Total population!!Two or more races!!Black or African American and American Indian and Alaska Native
+0062PE,Percent!!Total population!!Two or more races!!Black or African American and American Indian and Alaska Native
+0064E,Estimate!!Race alone or in combination with one or more other races!!Total population!!White
+0064PE,Percent!!Race alone or in combination with one or more other races!!Total population!!White
+0065E,Estimate!!Race alone or in combination with one or more other races!!Total population!!Black or African American
+0065PE,Percent!!Race alone or in combination with one or more other races!!Total population!!Black or African American
+0066E,Estimate!!Race alone or in combination with one or more other races!!Total population!!American Indian and Alaska Native
+0066PE,Percent!!Race alone or in combination with one or more other races!!Total population!!American Indian and Alaska Native
+0067E,Estimate!!Race alone or in combination with one or more other races!!Total population!!Asian
+0067PE,Percent!!Race alone or in combination with one or more other races!!Total population!!Asian
+0068E,Estimate!!Race alone or in combination with one or more other races!!Total population!!Native Hawaiian and Other Pacific Islander
+0068PE,Percent!!Race alone or in combination with one or more other races!!Total population!!Native Hawaiian and Other Pacific Islander
+0069E,Estimate!!Race alone or in combination with one or more other races!!Total population!!Some other race
+0069PE,Percent!!Race alone or in combination with one or more other races!!Total population!!Some other race
+0071E,Estimate!!Total population!!Hispanic or Latino (of any race)
+0071PE,Percent!!Total population!!Hispanic or Latino (of any race)
+0072E,Estimate!!Total population!!Hispanic or Latino (of any race)!!Mexican
+0072PE,Percent!!Total population!!Hispanic or Latino (of any race)!!Mexican
+0073E,Estimate!!Total population!!Hispanic or Latino (of any race)!!Puerto Rican
+0073PE,Percent!!Total population!!Hispanic or Latino (of any race)!!Puerto Rican
+0074E,Estimate!!Total population!!Hispanic or Latino (of any race)!!Cuban
+0074PE,Percent!!Total population!!Hispanic or Latino (of any race)!!Cuban
+0075E,Estimate!!Total population!!Hispanic or Latino (of any race)!!Other Hispanic or Latino
+0075PE,Percent!!Total population!!Hispanic or Latino (of any race)!!Other Hispanic or Latino
+0076E,Estimate!!Total population!!Not Hispanic or Latino
+0076PE,Percent!!Total population!!Not Hispanic or Latino
+0077E,Estimate!!Total population!!Not Hispanic or Latino!!White alone
+0077PE,Percent!!Total population!!Not Hispanic or Latino!!White alone
+0078E,Estimate!!Total population!!Not Hispanic or Latino!!Black or African American alone
+0078PE,Percent!!Total population!!Not Hispanic or Latino!!Black or African American alone
+0079E,Estimate!!Total population!!Not Hispanic or Latino!!American Indian and Alaska Native alone
+0079PE,Percent!!Total population!!Not Hispanic or Latino!!American Indian and Alaska Native alone
+0080E,Estimate!!Total population!!Not Hispanic or Latino!!Asian alone
+0080PE,Percent!!Total population!!Not Hispanic or Latino!!Asian alone
+0081E,Estimate!!Total population!!Not Hispanic or Latino!!Native Hawaiian and Other Pacific Islander alone
+0081PE,Percent!!Total population!!Not Hispanic or Latino!!Native Hawaiian and Other Pacific Islander alone
+0082E,Estimate!!Total population!!Not Hispanic or Latino!!Some other race alone
+0082PE,Percent!!Total population!!Not Hispanic or Latino!!Some other race alone
+0083E,Estimate!!Total population!!Not Hispanic or Latino!!Two or more races
+0083PE,Percent!!Total population!!Not Hispanic or Latino!!Two or more races
+0084E,Estimate!!Total population!!Not Hispanic or Latino!!Two or more races!!Two races including Some other race
+0084PE,Percent!!Total population!!Not Hispanic or Latino!!Two or more races!!Two races including Some other race
+0085E,"Estimate!!Total population!!Not Hispanic or Latino!!Two or more races!!Two races excluding Some other race, and Three or more races"
+0085PE,"Percent!!Total population!!Not Hispanic or Latino!!Two or more races!!Two races excluding Some other race, and Three or more races"
+0086E,Estimate!!Total housing units
+0087E,"Estimate!!Citizen, 18 and over population"
+0088E,"Estimate!!Citizen, 18 and over population!!Male"
+0088PE,"Percent!!Citizen, 18 and over population!!Male"
+0089E,"Estimate!!Citizen, 18 and over population!!Female"
+0089PE,"Percent!!Citizen, 18 and over population!!Female"
+C01_001E,Estimate!!Total!!Population 18 to 24 years
+C01_002E,Estimate!!Total!!Population 18 to 24 years!!Less than high school graduate
+C01_003E,Estimate!!Total!!Population 18 to 24 years!!High school graduate (includes equivalency)
+C01_004E,Estimate!!Total!!Population 18 to 24 years!!Some college or associate's degree
+C01_005E,Estimate!!Total!!Population 18 to 24 years!!Bachelor's degree or higher
+C01_006E,Estimate!!Total!!Population 25 years and over
+C01_007E,Estimate!!Total!!Population 25 years and over!!Less than 9th grade
+C01_008E,"Estimate!!Total!!Population 25 years and over!!9th to 12th grade, no diploma"
+C01_009E,Estimate!!Total!!Population 25 years and over!!High school graduate (includes equivalency)
+C01_010E,"Estimate!!Total!!Population 25 years and over!!Some college, no degree"
+C01_011E,Estimate!!Total!!Population 25 years and over!!Associate's degree
+C01_012E,Estimate!!Total!!Population 25 years and over!!Bachelor's degree
+C01_013E,Estimate!!Total!!Population 25 years and over!!Graduate or professional degree
+C01_014E,Estimate!!Total!!Population 25 years and over!!High school graduate or higher
+C01_015E,Estimate!!Total!!Population 25 years and over!!Bachelor's degree or higher
+C01_016E,Estimate!!Total!!Population 25 to 34 years
+C01_017E,Estimate!!Total!!Population 25 to 34 years!!High school graduate or higher
+C01_018E,Estimate!!Total!!Population 25 to 34 years!!Bachelor's degree or higher
+C01_019E,Estimate!!Total!!Population 35 to 44 years
+C01_020E,Estimate!!Total!!Population 35 to 44 years!!High school graduate or higher
+C01_021E,Estimate!!Total!!Population 35 to 44 years!!Bachelor's degree or higher
+C01_022E,Estimate!!Total!!Population 45 to 64 years
+C01_023E,Estimate!!Total!!Population 45 to 64 years!!High school graduate or higher
+C01_024E,Estimate!!Total!!Population 45 to 64 years!!Bachelor's degree or higher
+C01_025E,Estimate!!Total!!Population 65 years and over
+C01_026E,Estimate!!Total!!Population 65 years and over!!High school graduate or higher
+C01_027E,Estimate!!Total!!Population 65 years and over!!Bachelor's degree or higher
+C02_002E,Estimate!!Percent!!Population 18 to 24 years!!Less than high school graduate
+C02_003E,Estimate!!Percent!!Population 18 to 24 years!!High school graduate (includes equivalency)
+C02_004E,Estimate!!Percent!!Population 18 to 24 years!!Some college or associate's degree
+C02_005E,Estimate!!Percent!!Population 18 to 24 years!!Bachelor's degree or higher
+C02_007E,Estimate!!Percent!!Population 25 years and over!!Less than 9th grade
+C02_008E,"Estimate!!Percent!!Population 25 years and over!!9th to 12th grade, no diploma"
+C02_009E,Estimate!!Percent!!Population 25 years and over!!High school graduate (includes equivalency)
+C02_010E,"Estimate!!Percent!!Population 25 years and over!!Some college, no degree"
+C02_011E,Estimate!!Percent!!Population 25 years and over!!Associate's degree
+C02_012E,Estimate!!Percent!!Population 25 years and over!!Bachelor's degree
+C02_013E,Estimate!!Percent!!Population 25 years and over!!Graduate or professional degree
+C02_014E,Estimate!!Percent!!Population 25 years and over!!High school graduate or higher
+C02_015E,Estimate!!Percent!!Population 25 years and over!!Bachelor's degree or higher
+C02_017E,Estimate!!Percent!!Population 25 to 34 years!!High school graduate or higher
+C02_018E,Estimate!!Percent!!Population 25 to 34 years!!Bachelor's degree or higher
+C02_020E,Estimate!!Percent!!Population 35 to 44 years!!High school graduate or higher
+C02_021E,Estimate!!Percent!!Population 35 to 44 years!!Bachelor's degree or higher
+C02_023E,Estimate!!Percent!!Population 45 to 64 years!!High school graduate or higher
+C02_024E,Estimate!!Percent!!Population 45 to 64 years!!Bachelor's degree or higher
+C02_026E,Estimate!!Percent!!Population 65 years and over!!High school graduate or higher
+C02_027E,Estimate!!Percent!!Population 65 years and over!!Bachelor's degree or higher
