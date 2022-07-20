@@ -84,3 +84,6 @@ test <- read_csv("data/test.csv") %>% pipeline()
 
 str(train)
 str(test)
+
+write.csv(train, file = "data/train_clean.csv")
+write.csv(test, file = "data/test_clean.csv")
