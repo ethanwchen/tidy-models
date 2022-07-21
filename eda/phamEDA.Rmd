@@ -11,9 +11,9 @@ library(tidyverse)
 library(tidymodels)
 library(dlookr)
 tidymodels_prefer()
-train <- read_csv("../data/train_clean.csv")
-train <- train[3:ncol(train)]
-features <- colnames(train)[2:ncol(train)]
+train <- read_csv("data/train_clean.csv")
+features <- train[2:ncol(train)]
+features <- colnames(features)[2:ncol(features)]
 ```
 
 ```{r}
@@ -31,6 +31,9 @@ correlate(train) %>%
 correlate(train) %>%
   arrange(desc(coef_corr))  %>%
   slice(which(row_number() %% 2 == 1))
+
+correlate(train) %>%
+  arrange(coef_corr) %>% view()
 ```
 
 Features
