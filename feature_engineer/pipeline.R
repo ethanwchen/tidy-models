@@ -70,9 +70,9 @@ pipeline <- function(data) {
     # high school graduate (includes equivalency)
     mutate(high = 100*(.[[170]]+.[[176]])/totalPop) %>%
     # some college or associate's degree
-    mutate(college = 100*(.[[171]]+.[[177]]+.[[178]])/totalPop) %>%
-    mutate(bachelor = 100*(.[[172]]+.[[179]]+.[[180]])/totalPop) %>%
-    select(noHigh, high, college, bachelor)
+    mutate(someCollege = 100*(.[[171]]+.[[177]]+.[[178]])/totalPop) %>%
+    mutate(bachelorsOrHigher = 100*(.[[172]]+.[[179]]+.[[180]])/totalPop) %>%
+    select(noHigh, high, someCollege, bachelorsOrHigher)
 
   cbind(core, age, race1, race2, education)
 
