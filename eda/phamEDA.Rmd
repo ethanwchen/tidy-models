@@ -1,0 +1,43 @@
+---
+title: "Stats 101C"
+author: "Austin Pham"
+date: "Summer 2022"
+output:
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(dlookr)
+tidymodels_prefer()
+train <- read_csv("../data/train_clean.csv")
+train <- train[3:ncol(train)]
+features <- colnames(train)[2:ncol(train)]
+```
+
+```{r}
+describe(train)
+normality(train) %>%
+  arrange(desc(p_value))
+```
+
+Correlations
+
+```{r}
+correlate(train) %>%
+  arrange(coef_corr) %>%
+  slice(which(row_number() %% 2 == 1))
+correlate(train) %>%
+  arrange(desc(coef_corr))  %>%
+  slice(which(row_number() %% 2 == 1))
+```
+
+Features
+
+```{r}
+for (i in 1:40) {
+  plot(relate(target_by(train, dem), features[i]))
+}
+```
+
