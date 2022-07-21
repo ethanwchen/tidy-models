@@ -5,70 +5,56 @@ tidymodels_prefer()
 
 pipeline <- function(data) {
 
+  colnames(data) <- paste("f", colnames(data), sep = "")
+
+  df <- data %>%
+    mutate(vote = ftotal_votes / f0001E) %>%
+    mutate(male = f0002E / f0001E) %>%
+    mutate(age0 = f0019E/ f0001E) %>%
+    mutate(age20 = f0009E / f0001E) %>%
+    mutate(age25 = f0010E / f0001E) %>%
+    mutate(age35 = f0011E / f0001E) %>%
+    mutate(age45 = f0012E / f0001E) %>%
+    mutate(age55 = f0013E / f0001E) %>%
+    mutate(age60 = (f0014E + f0015E + f0016E) / f0001E) %>%
+    mutate(age85 = f0017E / f0001E) %>%
+    mutate(age18 = 1 - age0 - age25 - age35 - age45 - age55 - age60 - age85) %>%
+    mutate(white = f0037E / f0001E) %>%
+    mutate(black = f0038E / f0001E) %>%
+    mutate(indCher = f0040E / f0001E) %>%
+    mutate(indChip = f0041E / f0001E) %>%
+    mutate(indNava = f0042E / f0001E) %>%
+    mutate(indSiou = f0043E / f0001E) %>%
+    mutate(indOther = (f0039E - (f0040E + f0041E + f0042E + f0043E))/ f0001E) %>%
+    mutate(indian = f0045E / f0001E) %>%
+    mutate(chin = f0046E / f0001E) %>%
+    mutate(fil = f0047E / f0001E) %>%
+    mutate(jap = f0048E / f0001E) %>%
+    mutate(kor = f0049E / f0001E) %>%
+    mutate(viet = f0050E / f0001E) %>%
+    mutate(asianOther = f0051E / f0001E) %>%
+    mutate(hawaii = (f0053E + f0054E + f0055E + f0056E) / f0001E) %>%
+    mutate(raceOther = f0057E / f0001E) %>%
+    mutate(twoBlack = f0059E / f0001E) %>%
+    mutate(twoNative = f0060E / f0001E) %>%
+    mutate(twoAsian = f0061E / f0001E) %>%
+    mutate(twoBlackNative = f0062E / f0001E) %>%
+    mutate(twoOther = (f0058E / f0001E) - twoBlack - twoNative - twoAsian - twoBlackNative) %>% 
+    mutate(totalPop = fC01_001E + fC01_006E) %>%
+    mutate(noHigh = (fC01_002E + fC01_007E + fC01_008E) / totalPop) %>%
+    mutate(someCollege = (fC01_004E + fC01_010E + fC01_011E) / totalPop) %>%
+    mutate(bachelorsOrHigher = (fC01_005E + fC01_012E + fC01_013E) / totalPop) %>%
+    select(vote, male, age0, age18, age25, age35, age45, age55, age60, age85, white, black, indCher, indChip, indNava, indSiou, indOther, indian, chin, fil, jap, kor, viet, asianOther, hawaii, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, twoOther, noHigh, someCollege, bachelorsOrHigher)
+
   # check if we are dealing with train/test set
-  if ("percent_dem" %in% colnames(data)){
-    core <- data %>%
-      mutate(dem = percent_dem * 100) %>%
-      mutate(vote = .[[3]]/.[[4]]) %>%
-      select(Id = id, dem = dem, vote = vote)
+  if ("fpercent_dem" %in% colnames(data)){
+    extra <- data %>%
+      select(dem = fpercent_dem)
   } else {
-    core <- data %>%
-      mutate(vote = .[[3]]/.[[4]]) %>%
-      select(Id = id, vote = vote)
+    extra <- data %>%
+      select(Id = fid)
   }
-
-  age <- data %>%
-    mutate(male = 100*.[[5]]/.[[4]]) %>%
-    mutate(age0 = 100*.[[36]]/.[[4]]) %>%
-    mutate(age20 = 100*.[[17]]/.[[4]]) %>%
-    mutate(age25 = 100*.[[19]]/.[[4]]) %>%
-    mutate(age35 = 100*.[[21]]/.[[4]]) %>%
-    mutate(age45 = 100*.[[23]]/.[[4]]) %>%
-    mutate(age55 = 100*.[[25]]/.[[4]]) %>%
-    mutate(age60 = 100*(.[[27]]+.[[29]]+.[[31]])/.[[4]]) %>%
-    mutate(age85 = 100*.[[33]]/.[[4]]) %>%
-    mutate(age18 = 100 - age0 - age25 - age35 - age45 -
-                  age55 - age60 - age85) %>%
-    select(male, age18, age25, age35,
-          age45, age55, age60, age85)
-
-  race1 <- data %>% 
-    mutate(white = 100*.[[68]]/.[[4]]) %>%
-    mutate(black = 100*.[[70]]/.[[4]]) %>%
-    mutate(indCher = 100*.[[74]]/.[[4]]) %>%
-    mutate(indChip = 100*.[[76]]/.[[4]]) %>%
-    mutate(indNava = 100*.[[78]]/.[[4]]) %>%
-    mutate(indSiou = 100*.[[80]]/.[[4]]) %>%
-    mutate(indOther = 100*(.[[72]]-(.[[74]]+.[[76]]+.[[78]]+.[[80]]))/.[[4]]) %>%
-    mutate(indian = 100*.[[84]]/.[[4]]) %>%
-    mutate(chin = 100*.[[86]]/.[[4]]) %>%
-    mutate(fil = 100*.[[88]]/.[[4]]) %>%
-    mutate(jap = 100*.[[90]]/.[[4]]) %>%
-    select(white, black, indCher ,indChip, indNava, indSiou, 
-            indOther, indian, chin, fil, jap)
-
-  race2 <- data %>%
-    mutate(kor = 100*.[[92]]/.[[4]]) %>%
-    mutate(viet = 100*.[[94]]/.[[4]]) %>%
-    mutate(asianOther = 100*.[[96]]/.[[4]]) %>%
-    mutate(hawaii = 100*(.[[100]]+.[[102]]+.[[104]]+.[[106]])/.[[4]]) %>%
-    mutate(raceOther = 100*.[[108]]/.[[4]]) %>%
-    mutate(twoBlack = 100*.[[112]]/.[[4]]) %>%
-    mutate(twoNative = 100*.[[114]]/.[[4]]) %>%
-    mutate(twoAsian = 100*.[[116]]/.[[4]]) %>%
-    mutate(twoBlackNative = 100*.[[118]]/.[[4]]) %>%
-    mutate(twoOther = 100*.[[110]]/.[[4]] - twoBlack - twoNative - twoAsian - twoBlackNative) %>% 
-    select(kor, viet, asianOther, hawaii, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative)
-
-  education <- data %>%
-    mutate(totalPop = .[[168]]+.[[173]]) %>%
-    mutate(noHigh = 100*(.[[169]]+.[[174]]+.[[175]])/totalPop) %>%
-    mutate(someCollege = 100*(.[[171]]+.[[177]]+.[[178]])/totalPop) %>%
-    mutate(bachelorsOrHigher = 100*(.[[172]]+.[[179]]+.[[180]])/totalPop) %>%
-    select(noHigh, someCollege, bachelorsOrHigher)
-
-  cbind(core, age, race1, race2, education)
-
+  cbind(df, extra)
 }
 
 # run from root directory
@@ -80,3 +66,10 @@ str(test)
 
 write.csv(train, file = "data/train_clean.csv", row.names = FALSE)
 write.csv(test, file = "data/test_clean.csv", row.names = FALSE)
+
+# train <- read_csv("data/train.csv")
+# test <- read_csv("data/test.csv")
+# colnames(train) <- paste("f", colnames(train), sep = "")
+# colnames(test) <- paste("f", colnames(test), sep = "")
+# colnames(train)
+# colnames(test)
