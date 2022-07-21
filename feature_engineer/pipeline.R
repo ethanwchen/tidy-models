@@ -72,7 +72,7 @@ pipeline <- function(data) {
     # some college or associate's degree
     mutate(college = 100*(.[[171]]+.[[177]]+.[[178]])/totalPop) %>%
     mutate(bachelor = 100*(.[[172]]+.[[179]]+.[[180]])/totalPop) %>%
-    select(noHigh, high, college, bachelor)
+    select(noHigh, high, somecollege, bachelorsOrHigher)
 
   cbind(core, age, race1, race2, education)
 
