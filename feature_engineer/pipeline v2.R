@@ -55,7 +55,7 @@ pipeline <- function(data) {
     mutate(notHispTwoRaceInclude = f0084E/f0001E) %>% 
     mutate(notHispTwoRaceExclude = f0085E/f0001E) %>% 
     mutate(bachelorsOrHigher = (fC01_005E + fC01_012E + fC01_013E) / totalPop) %>%
-    select(vote, male, age18, age25, age35, age45, age55, age60, age85, white, black, indCher, indChip, indNava, indSiou, indOther, indian, chin, fil, jap, kor, viet, asianOther, hawaii, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, twoOther, hispAny, hispMexican, hispPuerto, hispCuban, notHispOneWhite, notHispOneWhite, notHispOneBlack, notHispOneNative, notHispOneAsian, notHispOneHawaii, notHispTwoRace, notHispTwoRaceInclude, noHigh, someCollege, bachelorsOrHigher)
+    select(vote, male, age18, age25, age35, age45, age55, age60, age85, white, black, indCher, indChip, indNava, indSiou, indOther, indian, chin, fil, jap, kor, viet, asianOther, hawaii, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, hispAny, hispMexican, hispPuerto, hispCuban, notHispOneWhite, notHispOneWhite, notHispOneBlack, notHispOneNative, notHispOneAsian, notHispOneHawaii, notHispTwoRace, notHispTwoRaceInclude, noHigh, someCollege, bachelorsOrHigher)
   # check if we are dealing with train/test set
   if ("fpercent_dem" %in% colnames(data)){
     extra <- data %>%
