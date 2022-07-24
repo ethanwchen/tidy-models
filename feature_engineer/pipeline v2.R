@@ -1,8 +1,3 @@
-library(tidyverse)
-library(tidymodels)
-# library(dlookr)
-tidymodels_prefer()
-
 pipeline <- function(data) {
 
   # check if we are dealing with train/test set
@@ -44,8 +39,9 @@ pipeline <- function(data) {
     mutate(chin = 100*.[[86]]/.[[4]]) %>%
     mutate(fil = 100*.[[88]]/.[[4]]) %>%
     mutate(jap = 100*.[[90]]/.[[4]]) %>%
+    mutate(filjap = fil + jap) %>% 
     select(white, black, indCher ,indChip, indNava, indSiou, 
-            indOther, indian, chin, fil, jap)
+            indOther, indian, chin, filjap)
 
   race2 <- data %>%
     mutate(kor = 100*.[[92]]/.[[4]]) %>%
@@ -76,7 +72,7 @@ pipeline <- function(data) {
     mutate(notHispTwoRace = 100*.[[156]]/.[[4]]) %>% 
     mutate(notHispTwoRaceInclude = 100*.[[158]]/.[[4]]) %>% 
     mutate(notHispTwoRaceExclude = 100*.[[160]]/.[[4]]) %>% 
-    select(hispAny,hispMexican,hispPuerto,hispCuban,hispOther,notHispOneRace,notHispOneWhite,notHispOneWhite,notHispOneBlack,notHispOneNative,notHispOneAsian,notHispOneHawaii,notHispOneOther,notHispTwoRace,notHispTwoRaceInclude,notHispTwoRaceExclude)
+    select(hispAny,hispMexican,hispPuerto,hispCuban,notHispOneWhite,notHispOneWhite,notHispOneBlack,notHispOneNative,notHispOneAsian,notHispOneHawaii,notHispTwoRace,notHispTwoRaceInclude)
     
 
   education <- data %>%
@@ -86,12 +82,6 @@ pipeline <- function(data) {
     mutate(bachelorsOrHigher = 100*(.[[172]]+.[[179]]+.[[180]])/totalPop) %>%
     select(noHigh, someCollege, bachelorsOrHigher)
 
-  cbind(core, age, race1, race2, education)
+  cbind(core, age, race1, race2, hispanic, education)
 
 }
-
-# run from root directory
-train <- read_csv("./train.csv")
-trainCleaned <- train %>% pipeline()
-test <- read_csv("./test.csv")
-testCleaned <- test %>% pipeline()
