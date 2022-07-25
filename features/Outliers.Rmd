@@ -1,0 +1,58 @@
+---
+title: "Outliers"
+author: "Natanael Wijaya"
+date: '2022-07-25'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(dlookr)
+library(smooth)
+library(modeltime)
+library(poissonreg)
+tidymodels_prefer()
+```
+
+```{r}
+train <- read_csv("./train.csv")
+test <- read_csv("./test.csv")
+
+train_id <- train %>% 
+  select(id)
+
+train_id <- train_id[[1]]
+
+train <- train %>%
+select(-ends_with("PE"), -contains("C02"), -id)
+
+test <- test %>%
+select(-ends_with("PE"), -contains("C02"))
+```
+
+```{r}
+outliers <- c()
+for (col in 1:5) {
+  for (row in 1:nrow(train)) {
+    value <- train[row, col]
+    id <- train_id[row]
+    if((value>(mean(train[[col]], na.rm=TRUE) 
+                + (2*sd(train[[col]], na.rm=TRUE))))
+     |
+     (value<(mean(train[[col]], na.rm=TRUE) 
+                - (2*sd(train[[col]], na.rm=TRUE))))) {
+      outliers <- c(id, outliers)
+     }
+  } 
+}
+```
+
+```{r}
+sort(table(outliers))
+```
+
