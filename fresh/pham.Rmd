@@ -1,0 +1,462 @@
+---
+title: "Voting Prediction"
+date: "`r format(Sys.Date())`"
+author: "Austin Pham"
+output:
+  html_document:
+    df_print: tibble
+    number_sections: yes
+    theme: simplex
+    toc: yes
+    toc_depth: 2
+params:
+    kaggle: TRUE
+---
+
+```{r, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, fig.align = "center")
+library(conflicted)
+library(tidymodels)
+library(workflows)
+library(tune)
+library(readr)
+library(forcats)
+library(doFuture)
+library(caret)
+library(caretEnsemble)
+library(patchwork)
+library(tabnet)
+library(xgboost)
+library(dlookr)
+library(tidyverse)
+library(tidymodels)
+library(vip)
+library(skimr)
+library(skimr)
+library(timetk)
+library(ranger)
+library(kernlab)
+library(tictoc)
+library(rpart)
+library(CORElearn)
+library(caretEnsemble)
+tidymodels_prefer()
+theme_set(theme_light())
+set.seed(42)
+```
+
+
+
+```{r}
+trainNums <- read_csv("train.csv") %>%
+    select(-ends_with("PE"), -contains("C02")) %>%
+    select(Id = id, target = percent_dem, votes = total_votes, pop = "0001E", male = "0002E", female = "0003E", age0 = "0005E", age5 = "0006E", age10 = "0007E", age15 = "0008E", age20 = "0009E", age25 = "0010E", age35 = "0011E", age45 = "0012E", age55 = "0013E", age60 = "0014E", age65 = "0015E", age75 = "0016E", age85 = "0017E", medianAge = "0018E", under18 = "0019E", over16 = "0020E", over18 = "0021E", over21 = "0022E", over62 = "0023E", over65 = "0024E", over18male = "0026E", over18female = "0027E", over65male = "0030E", over65female = "0031E", oneRace = "0034E", twoRace = "0035E", white = "0037E", black = "0038E", native = "0039E", cherokee = "0040E", chippewa = "0041E", navajo = "0042E", sioux = "0043E", asian = "0044E", indian = "0045E", chinese = "0046E", filipino = "0047E", japanese = "0048E", korean = "0049E", viet = "0050E", otherAsian = "0051E", hawaiian = "0052E", hawaiianNative = "0053E", hawaiianChamorro = "0054E", hawaiianSamoan = "0055E", hawaiianOther = "0056E", oneRaceOther = "0057E", twoRacePlus = "0058E", whiteBlack = "0059E", whiteNative = "0060E", whiteAsian = "0061E", blackNative = "0062E", comboWhite = "0064E", comboBlack = "0065E", comboNative = "0066E", comboAsian = "0067E", comboHawaiian = "0068E", comboOther = "0069E", hispanic = "0071E", mexican = "0072E", puertoRican = "0073E", cuban = "0074E", otherHispanic = "0075E", notHispanic = "0076E", notHispanicWhite = "0077E", notHispanicBlack = "0078E", notHispanicNative = "0079E", notHispanicAsian = "0080E", notHispanicHawaiian = "0081E", notHispanicOther = "0082E", notHispanicTwoRace = "0083E", notHispanicTwoRaceSome = "0084E", notHispanicTwoRaceThree = "0085E", housing = "0086E", citizen = "0087E", citizenMale = "0088E", citizenFemale = "0089E", teen = "C01_001E", teenElementary = "C01_002E", teenHigh = "C01_003E", teenCollege = "C01_004E", teenBachelor = "C01_005E", adult = "C01_006E", adultElementary = "C01_007E", adultNoDip = "C01_008E", adultHigh = "C01_009E", adultCollege = "C01_010E", adultAssociate = "C01_011E", adultBachelor = "C01_012E", adultGraduate = "C01_013E", adultHighPlus = "C01_014E", adultBachelorPlus = "C01_015E", twenty = "C01_016E", twentyHighPlus = "C01_017E", twentyBachelorPlus = "C01_018E", thirty = "C01_019E", thirtyHighPlus = "C01_020E", thirtyBachelorPlus = "C01_021E", forty = "C01_022E", fortyHighPlus = "C01_023E", fortyBachelorPlus = "C01_024E", sixty = "C01_025E", sixtyHighPlus = "C01_026E", sixtyBachelorPlus = "C01_027E")
+  
+testNums <- read_csv("test.csv") %>%
+    select(-ends_with("PE"), -contains("C02")) %>%
+    select(Id = id, target = id, votes = total_votes, pop = "0001E", male = "0002E", female = "0003E", age0 = "0005E", age5 = "0006E", age10 = "0007E", age15 = "0008E", age20 = "0009E", age25 = "0010E", age35 = "0011E", age45 = "0012E", age55 = "0013E", age60 = "0014E", age65 = "0015E", age75 = "0016E", age85 = "0017E", medianAge = "0018E", under18 = "0019E", over16 = "0020E", over18 = "0021E", over21 = "0022E", over62 = "0023E", over65 = "0024E", over18male = "0026E", over18female = "0027E", over65male = "0030E", over65female = "0031E", oneRace = "0034E", twoRace = "0035E", white = "0037E", black = "0038E", native = "0039E", cherokee = "0040E", chippewa = "0041E", navajo = "0042E", sioux = "0043E", asian = "0044E", indian = "0045E", chinese = "0046E", filipino = "0047E", japanese = "0048E", korean = "0049E", viet = "0050E", otherAsian = "0051E", hawaiian = "0052E", hawaiianNative = "0053E", hawaiianChamorro = "0054E", hawaiianSamoan = "0055E", hawaiianOther = "0056E", oneRaceOther = "0057E", twoRacePlus = "0058E", whiteBlack = "0059E", whiteNative = "0060E", whiteAsian = "0061E", blackNative = "0062E", comboWhite = "0064E", comboBlack = "0065E", comboNative = "0066E", comboAsian = "0067E", comboHawaiian = "0068E", comboOther = "0069E", hispanic = "0071E", mexican = "0072E", puertoRican = "0073E", cuban = "0074E", otherHispanic = "0075E", notHispanic = "0076E", notHispanicWhite = "0077E", notHispanicBlack = "0078E", notHispanicNative = "0079E", notHispanicAsian = "0080E", notHispanicHawaiian = "0081E", notHispanicOther = "0082E", notHispanicTwoRace = "0083E", notHispanicTwoRaceSome = "0084E", notHispanicTwoRaceThree = "0085E", housing = "0086E", citizen = "0087E", citizenMale = "0088E", citizenFemale = "0089E", teen = "C01_001E", teenElementary = "C01_002E", teenHigh = "C01_003E", teenCollege = "C01_004E", teenBachelor = "C01_005E", adult = "C01_006E", adultElementary = "C01_007E", adultNoDip = "C01_008E", adultHigh = "C01_009E", adultCollege = "C01_010E", adultAssociate = "C01_011E", adultBachelor = "C01_012E", adultGraduate = "C01_013E", adultHighPlus = "C01_014E", adultBachelorPlus = "C01_015E", twenty = "C01_016E", twentyHighPlus = "C01_017E", twentyBachelorPlus = "C01_018E", thirty = "C01_019E", thirtyHighPlus = "C01_020E", thirtyBachelorPlus = "C01_021E", forty = "C01_022E", fortyHighPlus = "C01_023E", fortyBachelorPlus = "C01_024E", sixty = "C01_025E", sixtyHighPlus = "C01_026E", sixtyBachelorPlus = "C01_027E")
+
+trainPerc <- read_csv("train.csv") %>%
+    select(Id = id, target = percent_dem, votes = total_votes, pop = "0001E", male = "0002PE", female = "0003PE", age0 = "0005PE", age5 = "0006PE", age10 = "0007PE", age15 = "0008PE", age20 = "0009PE", age25 = "0010PE", age35 = "0011PE", age45 = "0012PE", age55 = "0013PE", age60 = "0014PE", age65 = "0015PE", age75 = "0016PE", age85 = "0017PE", medianAge = "0018E", under18 = "0019PE", over16 = "0020PE", over18 = "0021PE", over21 = "0022PE", over62 = "0023PE", over65 = "0024PE", over18male = "0026PE", over18female = "0027PE", over65male = "0030PE", over65female = "0031PE", oneRace = "0034PE", twoRace = "0035PE", white = "0037PE", black = "0038PE", native = "0039PE", cherokee = "0040PE", chippewa = "0041PE", navajo = "0042PE", sioux = "0043PE", asian = "0044PE", indian = "0045PE", chinese = "0046PE", filipino = "0047PE", japanese = "0048PE", korean = "0049PE", viet = "0050PE", otherAsian = "0051PE", hawaiian = "0052PE", hawaiianNative = "0053PE", hawaiianChamorro = "0054PE", hawaiianSamoan = "0055PE", hawaiianOther = "0056PE", oneRaceOther = "0057PE", twoRacePlus = "0058PE", whiteBlack = "0059PE", whiteNative = "0060PE", whiteAsian = "0061PE", blackNative = "0062PE", comboWhite = "0064PE", comboBlack = "0065PE", comboNative = "0066PE", comboAsian = "0067PE", comboHawaiian = "0068PE", comboOther = "0069PE", hispanic = "0071PE", mexican = "0072PE", puertoRican = "0073PE", cuban = "0074PE", otherHispanic = "0075PE", notHispanic = "0076PE", notHispanicWhite = "0077PE", notHispanicBlack = "0078PE", notHispanicNative = "0079PE", notHispanicAsian = "0080PE", notHispanicHawaiian = "0081PE", notHispanicOther = "0082PE", notHispanicTwoRace = "0083PE", notHispanicTwoRaceSome = "0084PE", notHispanicTwoRaceThree = "0085PE", housing = "0086E", citizen = "0087E", citizenMale = "0088PE", citizenFemale = "0089PE", teenElementary = "C02_002E", teenHigh = "C02_003E", teenCollege = "C02_004E", teenBachelor = "C02_005E", adultElementary = "C02_007E", adultNoDip = "C02_008E", adultHigh = "C02_009E", adultCollege = "C02_010E", adultAssociate = "C02_011E", adultBachelor = "C02_012E", adultGraduate = "C02_013E", adultHighPlus = "C02_014E", adultBachelorPlus = "C02_015E", twentyHighPlus = "C02_017E", twentyBachelorPlus = "C02_018E", thirtyHighPlus = "C02_020E", thirtyBachelorPlus = "C02_021E", fortyHighPlus = "C02_023E", fortyBachelorPlus = "C02_024E", sixtyHighPlus = "C02_026E", sixtyBachelorPlus = "C02_027E")
+
+testPerc <- read_csv("test.csv") %>%
+    select(Id = id, target = id, votes = total_votes, pop = "0001E", male = "0002PE", female = "0003PE", age0 = "0005PE", age5 = "0006PE", age10 = "0007PE", age15 = "0008PE", age20 = "0009PE", age25 = "0010PE", age35 = "0011PE", age45 = "0012PE", age55 = "0013PE", age60 = "0014PE", age65 = "0015PE", age75 = "0016PE", age85 = "0017PE", medianAge = "0018E", under18 = "0019PE", over16 = "0020PE", over18 = "0021PE", over21 = "0022PE", over62 = "0023PE", over65 = "0024PE", over18male = "0026PE", over18female = "0027PE", over65male = "0030PE", over65female = "0031PE", oneRace = "0034PE", twoRace = "0035PE", white = "0037PE", black = "0038PE", native = "0039PE", cherokee = "0040PE", chippewa = "0041PE", navajo = "0042PE", sioux = "0043PE", asian = "0044PE", indian = "0045PE", chinese = "0046PE", filipino = "0047PE", japanese = "0048PE", korean = "0049PE", viet = "0050PE", otherAsian = "0051PE", hawaiian = "0052PE", hawaiianNative = "0053PE", hawaiianChamorro = "0054PE", hawaiianSamoan = "0055PE", hawaiianOther = "0056PE", oneRaceOther = "0057PE", twoRacePlus = "0058PE", whiteBlack = "0059PE", whiteNative = "0060PE", whiteAsian = "0061PE", blackNative = "0062PE", comboWhite = "0064PE", comboBlack = "0065PE", comboNative = "0066PE", comboAsian = "0067PE", comboHawaiian = "0068PE", comboOther = "0069PE", hispanic = "0071PE", mexican = "0072PE", puertoRican = "0073PE", cuban = "0074PE", otherHispanic = "0075PE", notHispanic = "0076PE", notHispanicWhite = "0077PE", notHispanicBlack = "0078PE", notHispanicNative = "0079PE", notHispanicAsian = "0080PE", notHispanicHawaiian = "0081PE", notHispanicOther = "0082PE", notHispanicTwoRace = "0083PE", notHispanicTwoRaceSome = "0084PE", notHispanicTwoRaceThree = "0085PE", housing = "0086E", citizen = "0087E", citizenMale = "0088PE", citizenFemale = "0089PE", teenElementary = "C02_002E", teenHigh = "C02_003E", teenCollege = "C02_004E", teenBachelor = "C02_005E", adultElementary = "C02_007E", adultNoDip = "C02_008E", adultHigh = "C02_009E", adultCollege = "C02_010E", adultAssociate = "C02_011E", adultBachelor = "C02_012E", adultGraduate = "C02_013E", adultHighPlus = "C02_014E", adultBachelorPlus = "C02_015E", twentyHighPlus = "C02_017E", twentyBachelorPlus = "C02_018E", thirtyHighPlus = "C02_020E", thirtyBachelorPlus = "C02_021E", fortyHighPlus = "C02_023E", fortyBachelorPlus = "C02_024E", sixtyHighPlus = "C02_026E", sixtyBachelorPlus = "C02_027E")
+trainPerc <- na.omit(trainPerc)
+```
+
+Lets remove some outliers from our training.
+
+```{r}
+
+```
+
+Set our training/testing sets.
+
+```{r}
+nTrain <- nrow(trainNums)
+nTest <- nrow(testNums)
+vote_df <- rbind(trainNums, testNums)
+```
+
+Our recipe will:
+
+1. Remove all predictors with only one observation (zv)
+2. Perform variable transformations (YeoJohnson & Normalize)
+3. Create few higher-order terms for non-linear relationships
+
+```{r}
+vote_df2 <- recipe(target ~ ., data = vote_df) %>%
+  update_role(Id, new_role = "id_variable") %>%
+  step_zv(all_predictors()) %>% 
+  step_YeoJohnson(all_predictors()) %>%
+  step_normalize(all_predictors()) %>%
+  step_poly(votes, pop, degree = 2) %>%
+  prep() %>%
+  juice()
+
+vote_training <- head(vote_df2, nTrain)
+vote_testing_raw <- tail(vote_df2, nTest) %>% select(-target)
+```
+
+Correlation Plots
+
+```{r}
+cor <- correlate(vote_training) %>%
+  arrange(coef_corr) %>%
+  slice(which(row_number() %% 2 == 1))
+view(cor)
+```
+
+Variable Importance with Random Forests
+
+```{r}
+rf_res1 <- ranger(target ~ ., , data = vote_training, importance = "impurity_corrected")
+importance(rf_res1) %>% 
+  enframe("Variable", "Importance") %>%
+  arrange(desc(Importance)) %>%
+  slice(1:50) %>% ggplot(aes(x = Variable, y = Importance, fill = Importance)) + geom_col() + coord_flip() + 
+  labs(title = "Random Forest Variable Importance")
+```
+
+Finalize the recipe
+
+```{r}
+tmp_rec1 <- recipe(target ~ ., data = vote_training) %>%
+    step_rm(Id) %>%
+    step_zv(all_predictors()) %>%
+    step_YeoJohnson(all_predictors()) %>%
+    step_normalize(all_predictors())
+
+tmp_rec2 <- recipe(target ~ ., data = vote_training) %>%
+    update_role(Id, new_role = "id_variable") %>%
+    step_zv(all_predictors()) %>%
+    step_YeoJohnson(all_predictors()) %>%
+    step_normalize(all_predictors())
+
+tmp_rec %>%
+    check_missing(all_predictors()) %>%
+    prep()
+```
+
+Recipe
+
+Inputs:
+
+      role #variables
+   outcome          1
+ predictor        111
+
+Training data contained 2331 data points and no missing data.
+
+Operations:
+
+Variables removed Id [trained]
+Zero variance filter removed <none> [trained]
+Yeo-Johnson transformation on male, female, age0, age5, age10, age15, age20, age25, age3... [trained]
+Centering and scaling for male, female, age0, age5, age10, age15, age20, age25, age35, age45,... [trained]
+Check missing values for male, female, age0, age5, age10, age15, age20, age25, age35, age45,... [trained]
+
+
+```{r}
+vote_rec1 <- prep(tmp_rec1)
+vote_rec2 <- prep(tmp_rec2)
+vote_juiced <- juice(vote_rec1)
+vote_testing <- bake(vote_rec2, vote_testing_raw)
+```
+
+Set cross validation.
+
+```{r}
+vote_vfold  <- vfold_cv(vote_training, v = 10, repeats = 2, strata = "target")
+ctrl <- control_bayes(no_improve = 15, verbose = TRUE)
+```
+
+```{r}
+# 1) Define a parsnip model
+xgb_model <-
+    boost_tree(mtry = tune(), 
+               trees = 2000,
+               min_n = 13,
+               tree_depth = tune(),
+               learn_rate = .02,
+               loss_reduction = 0,
+               sample_size = .5) %>%
+    set_mode("regression") %>% 
+    set_engine("xgboost")
+
+# 2) Define parameters using dials package
+xgb_param <- 
+    xgb_model %>%
+    extract_parameter_set_dials() %>% 
+    update(mtry = mtry(c(2L, 16L)),
+           # trees = trees(c(1000L, 2000L)),
+           # min_n = min_n(c(2L, 14L)),
+           tree_depth = tree_depth(c(1L, 5L))
+           # loss_reduction = loss_reduction(c(-10, 0)),
+           # learn_rate = learn_rate(),
+           # sample_size = sample_prop(c(.25, .75))
+    ) %>% 
+    finalize(select(vote_juiced, -target))
+
+# 3) Combine model and recipe using workflows package
+xgb_workflow <- 
+    workflow() %>% 
+    add_recipe(vote_rec) %>% 
+    add_model(xgb_model)
+
+# 4) Tune the workflow using tune package
+tictoc::tic()
+xgb_search <- tune_bayes(xgb_workflow, 
+                         resamples = vote_vfold,
+                         initial = 25, iter = 50,
+                         param_info = xgb_param,
+                         control = ctrl)
+tictoc::tic()
+
+# 5) Evaluate tuning results
+show_best(xgb_search, "rmse", maximize = FALSE, n = 10)
+autoplot(xgb_search, metric = "rmse")
+
+# 6) Select best model for, e.g., prediction
+xgb_param_best <- select_best(xgb_search, metric = "rmse", maximize = FALSE)
+# select_by_one_std_err(xgb_search, mtry, tree_depth, trees, min_n, 
+#                       metric = "rmse", maximize = FALSE)
+xgb_model_best <- finalize_model(xgb_model, xgb_param_best)
+xgb_model_finalfit <- fit(xgb_model_best, target ~ ., data = vote_juiced)
+
+# 7) Predict on test data
+xgb_preds <- 
+    predict(xgb_model_finalfit, new_data = ames_testing) %>% 
+    transmute(SalePrice = exp(.pred)) %>% 
+    bind_cols(select(ames_testing_raw, Id), .)
+
+# write_csv(xgb_preds, "submission.csv")
+```
+
+Let's create an ensemble model. Predictions are made from several tuned models on the entire training data set. We create a new data set with three variables (one prediction from each of the models). These variables are used as predictors for the output and the new ensemble model is trained on this data set.
+
+To predict on testing data, we 1) predict testing data using the individual models then 2) save the predictions and combine them to make the final predictions using the trained ensemble model. 
+
+
+```{r caret}
+set.seed(4312)
+trControl <- trainControl(
+    method = "cv",
+    savePredictions = "final",
+    index = createMultiFolds(vote_juiced$target, k = 10, times = 2),
+    allowParallel = TRUE,
+    verboseIter = FALSE
+)
+xgbTreeGrid <- expand.grid(
+    nrounds = 2000,
+    max_depth = 4,
+    eta = 0.02,
+    gamma = 0,
+    colsample_bytree = seq(.1, .3, .025),
+    subsample = 0.5,
+    min_child_weight = c(2, 3))
+glmnetGrid <- expand.grid(
+    alpha = 1,
+    lambda = 10^seq(-5, -1, length.out = 100))
+svmGrid <- expand.grid(
+    sigma = 10^seq(-5, -2, length.out = 10),
+    C = 2^seq(0, 7, length.out = 10))
+rfGrid <- expand.grid(
+    mtry = round(2^seq(5, 7, length.out = 10)),
+    splitrule = "variance",
+    min.node.size = 2:4)
+
+tictoc::tic()
+modelList <- caretList(
+    target ~ ., data = vote_juiced,
+    trControl = trControl,
+    metric = "RMSE",
+    tuneList = list(
+        xgb    = caretModelSpec(method = "xgbTree", tuneGrid = xgbTreeGrid),
+        glmnet = caretModelSpec(method = "glmnet", tuneGrid = glmnetGrid),
+        svm    = caretModelSpec(method = "svmRadial", tuneGrid = svmGrid,
+                                preProcess = c("nzv", "pca")),
+        rf     = caretModelSpec(method = "ranger", tuneGrid = rfGrid)
+    )
+)
+toc()
+```
+
+```{r}
+head(modelList$xgb$results[order(modelList$xgb$results$RMSE),c(1:5, 8)], 15)
+```
+eXtreme Gradient Boosting 
+
+2331 samples
+ 110 predictor
+
+No pre-processing
+Resampling: Cross-Validated (10 fold) 
+Summary of sample sizes: 2099, 2099, 2098, 2096, 2098, 2097, ... 
+Resampling results across tuning parameters:
+
+    eta max_depth gamma colsample_bytree min_child_weight       RMSE
+18 0.02         4     0            0.300                3 0.07442468
+10 0.02         4     0            0.200                3 0.07449258
+17 0.02         4     0            0.300                2 0.07451198
+14 0.02         4     0            0.250                3 0.07453719
+16 0.02         4     0            0.275                3 0.07456553
+15 0.02         4     0            0.275                2 0.07458284
+12 0.02         4     0            0.225                3 0.07463383
+13 0.02         4     0            0.250                2 0.07469599
+11 0.02         4     0            0.225                2 0.07480223
+9  0.02         4     0            0.200                2 0.07522673
+8  0.02         4     0            0.175                3 0.07532014
+7  0.02         4     0            0.175                2 0.07534429
+6  0.02         4     0            0.150                3 0.07557580
+5  0.02         4     0            0.150                2 0.07564782
+4  0.02         4     0            0.125                3 0.07603881
+
+Tuning parameter 'nrounds' was held constant at a value of 2000
+Tuning parameter 'max_depth' was held constant at a value of 4
+Tuning parameter 'eta' was
+ held constant at a value of 0.02
+Tuning parameter 'gamma' was held constant at a value of 0
+Tuning parameter 'subsample' was held constant at a value of 0.5
+RMSE was used to select the optimal model using the smallest value.
+The final values used for the model were nrounds = 2000, max_depth = 4, eta = 0.02, gamma = 0, colsample_bytree = 0.3, min_child_weight = 3 and subsample = 0.5.
+
+```{r}
+head(modelList$glmnet$results[order(modelList$glmnet$results$RMSE),1:4], 15)
+```
+glmnet 
+
+2331 samples
+ 110 predictor
+
+No pre-processing
+Resampling: Cross-Validated (10 fold) 
+Summary of sample sizes: 2099, 2099, 2098, 2096, 2098, 2097, ... 
+Resampling results across tuning parameters:
+
+   alpha       lambda       RMSE  Rsquared
+26     1 1.023531e-04 0.07416472 0.7869939
+24     1 8.497534e-05 0.07416923 0.7869883
+25     1 9.326033e-05 0.07417319 0.7869569
+23     1 7.742637e-05 0.07417652 0.7869599
+27     1 1.123324e-04 0.07418205 0.7868887
+22     1 7.054802e-05 0.07418649 0.7869169
+28     1 1.232847e-04 0.07419930 0.7867813
+20     1 5.857021e-05 0.07421823 0.7867778
+21     1 6.428073e-05 0.07422172 0.7867387
+19     1 5.336699e-05 0.07423305 0.7867165
+29     1 1.353048e-04 0.07424162 0.7865281
+18     1 4.862602e-05 0.07424898 0.7866451
+16     1 4.037017e-05 0.07429131 0.7864464
+30     1 1.484968e-04 0.07429324 0.7862328
+15     1 3.678380e-05 0.07429427 0.7864478
+
+Tuning parameter 'alpha' was held constant at a value of 1
+RMSE was used to select the optimal model using the smallest value.
+The final values used for the model were alpha = 1 and lambda = 0.0001023531.
+
+```{r}
+head(modelList$svm$results[order(modelList$svm$results$RMSE),1:4], 15)
+```
+
+Support Vector Machines with Radial Basis Function Kernel 
+
+2331 samples
+ 110 predictor
+
+Pre-processing: principal component signal extraction (104), centered (104), scaled (104), remove (6) 
+Resampling: Cross-Validated (10 fold) 
+Summary of sample sizes: 2099, 2099, 2098, 2096, 2098, 2097, ... 
+Resampling results across tuning parameters:
+
+          sigma          C       RMSE  Rsquared
+99  0.010000000  74.657859 0.09627065 0.6452216
+98  0.010000000  43.545280 0.09639611 0.6433444
+100 0.010000000 128.000000 0.09668029 0.6436615
+97  0.010000000  25.398417 0.09672164 0.6405835
+90  0.004641589 128.000000 0.09701395 0.6382481
+96  0.010000000  14.813995 0.09730458 0.6360238
+89  0.004641589  74.657859 0.09774465 0.6327714
+95  0.010000000   8.640478 0.09816507 0.6298230
+88  0.004641589  43.545280 0.09840277 0.6278353
+87  0.004641589  25.398417 0.09962000 0.6189650
+94  0.010000000   5.039684 0.09965023 0.6192985
+80  0.002154435 128.000000 0.09978558 0.6174588
+79  0.002154435  74.657859 0.10107862 0.6083510
+86  0.004641589  14.813995 0.10119129 0.6081941
+93  0.010000000   2.939469 0.10166924 0.6057675
+
+RMSE was used to select the optimal model using the smallest value.
+The final values used for the model were sigma = 0.01 and C = 74.65786.
+
+```{r}
+head(modelList$rf$results[order(modelList$rf$results$RMSE),1:4], 15)
+
+modelList$rf
+```
+Random Forest 
+
+2331 samples
+ 110 predictor
+
+No pre-processing
+Resampling: Cross-Validated (10 fold) 
+Summary of sample sizes: 2099, 2099, 2098, 2096, 2098, 2097, ... 
+Resampling results across tuning parameters:
+
+   mtry splitrule min.node.size       RMSE
+18   69  variance             4 0.08042750
+14   59  variance             3 0.08045221
+16   69  variance             2 0.08046702
+17   69  variance             3 0.08048508
+13   59  variance             2 0.08049307
+7    44  variance             2 0.08051032
+21   81  variance             4 0.08054050
+15   59  variance             4 0.08058670
+11   51  variance             3 0.08059722
+20   81  variance             3 0.08061046
+8    44  variance             3 0.08063361
+10   51  variance             2 0.08065242
+24   94  variance             4 0.08071601
+19   81  variance             2 0.08071661
+5    37  variance             3 0.08072587
+
+Tuning parameter 'splitrule' was held constant at a value of variance
+RMSE was used to select the optimal model using the smallest value.
+The final values used for the model were mtry = 69, splitrule = variance and min.node.size = 4.
+
+```{r}
+xgbTreeGrid <- expand.grid(nrounds = 2000, max_depth = 4, eta = 0.02,
+    gamma = 0, colsample_bytree = .3, subsample = 0.5, min_child_weight = 3)
+glmnetGrid <- expand.grid(alpha = 1, lambda = 0.0001023531)
+stacked_model <- caretList(
+    target ~ ., data = vote_juiced,
+    trControl = trControl,
+    metric = "RMSE",
+    tuneList = list(
+        xgb = caretModelSpec(method = "xgbTree", tuneGrid = xgbTreeGrid),
+        glmnet = caretModelSpec(method = "glmnet", tuneGrid = glmnetGrid)
+    )
+)
+```
+
+Finally, the predictions are ensembled using `caretEnsemble()`.
+
+```{r caret-stack}
+vote_stack <- caretEnsemble(stacked_model)
+vote_pred <- predict(vote_stack, newdata = vote_testing) %>%
+    bind_cols(vote_testing) %>%
+    select(Id = Id, Predicted = ...1)
+write.csv(vote_pred, file = "ensemble1.csv", row.names = FALSE)
+```
+
+We can also have a look at the models
+
+```{r caret-res, eval = TRUE}
+bwplot(resamples(vote_stack$models), metric = "RMSE")
+modelCor(resamples(vote_stack$models))
+```
+
+             xgb    glmnet
+xgb    1.0000000 0.4869352
+glmnet 0.4869352 1.0000000
