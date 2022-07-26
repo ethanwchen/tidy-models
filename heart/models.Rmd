@@ -1,0 +1,194 @@
+https://www.tidymodels.org/learn/work/bayes-opt/
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(stacks)
+library(ggplot2)
+library(xgboost)
+```
+
+
+```{r}
+train <- read_csv("heart_train.csv")
+test <- read_csv("heart_test.csv")
+train$num <- as.factor(train$num)
+test$thal <- as.character(test$thal)
+
+# nTrain <- nrow(train)
+# nTest <- nrow(test)
+# heart_df <- rbind(train, test)
+
+str(train)
+str(test)
+```
+
+```{r}
+ggplot(train) + aes(x = age, y = sex, color = num) + geom_jitter()
+ggplot(train) + aes(x = cp, y = trestbps, color = num) + geom_jitter()
+ggplot(train) + aes(x = chol, y = fbs, color = num) + geom_jitter()
+ggplot(train) + aes(x = restecg, y = thalach, color = num) + geom_jitter()
+ggplot(train) + aes(x = exang, y = oldpeak, color = num) + geom_jitter()
+ggplot(train) + aes(x = slope, y = ca, color = num) + geom_jitter()
+```
+
+
+```{r}
+set.seed(42)
+# heart_split <- initial_split(train)
+# heart_train <- training(heart_split)
+# heart_test  <- testing(heart_split)
+heart_folds <- vfold_cv(train, v = 10, repeats = 2)
+heart_rec <- recipe(num ~ ., data = train) %>%
+    update_role(id, new_role = "id_variable") %>%
+    step_dummy(all_nominal(), -num) %>%
+    step_zv(all_predictors()) %>%
+    step_YeoJohnson(all_predictors()) %>%
+    step_normalize(all_predictors())
+heart_wflow <- 
+  workflow() %>% 
+  add_recipe(heart_rec)
+ctrl_grid <- control_stack_grid()
+```
+
+
+```{r}
+rf_spec <- 
+  rand_forest(
+    mtry = tune(),
+    min_n = tune(),
+    trees = 500
+  ) %>%
+  set_mode("classification") %>%
+  set_engine("ranger")
+rf_wflow <-
+  heart_wflow %>%
+  add_model(rf_spec)
+rf_res <- 
+  tune_grid(
+    object = rf_wflow,
+    resamples = heart_folds,
+    grid = 10,
+    control = ctrl_grid
+  )
+```
+
+```{r}
+nnet_spec <-
+  mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) %>%
+  set_mode("classification") %>%
+  set_engine("nnet")
+nnet_rec <- 
+  heart_rec %>% 
+  step_normalize(all_predictors())
+nnet_wflow <- 
+  heart_wflow %>%
+  add_model(nnet_spec)
+nnet_res <-
+  tune_grid(
+    object = nnet_wflow,
+    resamples = heart_folds,
+    grid = 10,
+    control = ctrl_grid
+  )
+```
+
+```{r}
+log_spec <- 
+  logistic_reg(penalty = tune(), mixture = tune()) %>%
+  set_engine(engine = "glm") %>%
+  set_mode("classification")
+log_wflow <- 
+  heart_wflow %>%
+  add_model(log_spec)
+log_res <-
+  tune_grid(
+    object = log_wflow,
+    resamples = heart_folds,
+    grid = 10,
+    control = ctrl_grid
+  )
+```
+
+```{r}
+xgb_spec <- 
+  boost_tree(mtry = tune(), tree_depth = tune()) %>% 
+  set_engine("xgboost") %>% 
+  set_mode("classification") 
+xgb_wflow <- 
+  heart_wflow %>%
+  add_model(xgb_spec)
+xgb_res <-
+  tune_grid(
+    object = xgb_wflow,
+    resamples = heart_folds,
+    grid = 10,
+    control = ctrl_grid
+  )
+```
+
+```{r}
+knn_spec <- 
+  nearest_neighbor(neighbors = tune(), weight_func = "gaussian", dist_power = tune()) %>%
+  set_engine("kknn") %>% 
+  set_mode("classification")
+knn_wflow <- 
+  heart_wflow %>%
+  add_model(knn_spec)
+knn_res <-
+  tune_grid(
+    object = knn_wflow,
+    resamples = heart_folds,
+    grid = 10,
+    control = ctrl_grid
+  )
+```
+
+```{r}
+heart_stack <- 
+  stacks() %>%
+  add_candidates(rf_res) %>%
+  add_candidates(nnet_res) %>%
+  add_candidates(log_res) %>%
+  add_candidates(xgb_res) %>%
+  add_candidates(knn_res) %>%
+  # determine how to combine their predictions
+  blend_predictions() %>%
+  # fit the candidates with nonzero stacking coefficients
+  fit_members()
+```
+
+To make sure that we have the right trade-off between minimizing the number of members and optimizing performance, we can use the autoplot() method:
+
+```{r}
+autoplot(heart_stack)
+```
+
+To show the relationship more directly:
+
+```{r}
+autoplot(heart_stack, type = "members")
+```
+
+If these results were not good enough, blend_predictions() could be called again with different values of penalty. As it is, blend_predictions() picks the penalty parameter with the numerically optimal results. To see the top results:
+
+```{r}
+autoplot(heart_stack, type = "weights")
+```
+
+There are multiple facets since the ensemble members can have different effects on different classes.
+
+To identify which model configurations were assigned what stacking coefficients, we can make use of the collect_parameters() function:
+
+```{r}
+collect_parameters(heart_stack, "rf_res")
+```
+
+This object is now ready to predict with new data!
+
+```{r}
+heart_pred <- predict(heart_stack, test) %>%
+    bind_cols(test) %>%
+    select(id = id, Predicted = .pred_class)
+write.csv(heart_pred, file = "second.csv", row.names = FALSE)
+```
