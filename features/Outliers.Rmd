@@ -20,8 +20,8 @@ tidymodels_prefer()
 ```
 
 ```{r}
-train <- read_csv("./train.csv")
-test <- read_csv("./test.csv")
+train <- read_csv("ensemble/train.csv")
+test <- read_csv("ensemble/test.csv")
 
 train_id <- train %>% 
   select(id)
