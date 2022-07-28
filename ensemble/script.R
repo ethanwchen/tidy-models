@@ -1,28 +1,10 @@
-library(conflicted)
-library(tidymodels)
-library(workflows)
-library(tune)
-library(readr)
-library(forcats)
-library(doFuture)
-library(caret)
-library(caretEnsemble)
-library(patchwork)
-library(tabnet)
-library(xgboost)
-library(dlookr)
 library(tidyverse)
 library(tidymodels)
-library(vip)
-library(skimr)
-library(skimr)
-library(timetk)
-library(ranger)
-library(kernlab)
-library(tictoc)
-library(rpart)
-library(CORElearn)
+library(caret)
 library(caretEnsemble)
+library(xgboost)
+library(ranger)
+library(rpart)
 tidymodels_prefer()
 set.seed(42)
 
@@ -93,7 +75,7 @@ enetGrid <- expand.grid(fraction = 1, lambda = 0.05555556)
 # model 6 (bayseianRidge): NA
 # model 7 (randomGLM): NA
 # model 8 (gaussprRadial):
-gauss_Grid <- expand.grid(sigma = 0.05)
+gauss_Grid <- expand.grid(sigma = 0.00335)
 # model 9 (krlsRadial): NA
 set.seed(42)
 stacked_model <- caretList(
@@ -121,3 +103,5 @@ vote_pred <- predict(vote_stack, newdata = vote_testing) %>%
     bind_cols(vote_testing) %>%
     select(Id = Id, Predicted = ...1)
 write.csv(vote_pred, file = "dalle.csv", row.names = FALSE)
+
+print(head(vote_pred, 10))
