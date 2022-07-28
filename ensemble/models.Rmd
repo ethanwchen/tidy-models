@@ -48,8 +48,8 @@ set.seed(42)
 Let's read in our data
 
 ```{r}
-train <- read_csv("train.csv")
-test <- read_csv("test.csv")
+train <- read_csv("ensemble/train.csv")
+test <- read_csv("ensemble/test.csv")
 test$percent_dem <- test$id
 train <- rename(train, Id = "id")
 test <- rename(test, Id = "id")
@@ -582,6 +582,10 @@ Gaussian Process
 3 0.00335 0.08278861 0.7269400 0.06223496
 4 0.00500 0.08354950 0.7224938 0.06239918
 
+
+
+
+
 ```{r}
 # model 1 (xgboost)
 xgbTreeGrid <- expand.grid(nrounds = 2000, max_depth = 4, eta = 0.02,
@@ -597,7 +601,7 @@ enetGrid <- expand.grid(fraction = 1, lambda = 0.05555556)
 # model 6 (bayseianRidge): NA
 # model 7 (randomGLM): NA
 # model 8 (gaussprRadial):
-gauss_Grid <- expand.grid(sigma = 0.05)
+gauss_Grid <- expand.grid(sigma = 0.00335)
 # model 9 (krlsRadial): NA
 stacked_model <- caretList(
     target ~ ., data = vote_juiced,
@@ -615,7 +619,7 @@ stacked_model <- caretList(
     )
 )
 # saveRDS(stacked_model, "stacked_model.rds")
-# my_model <- readRDS("stacked_model.rds")
+stacked_model <- readRDS("submissions/stacked_model.rds")
 ```
 
 Finally, the predictions are ensembled using `caretEnsemble()`.
@@ -629,6 +633,25 @@ write.csv(vote_pred, file = "cyclip.csv", row.names = FALSE)
 ```
 
 We can also have a look at the models
+
+```{r}
+vote_stack$ens_model
+```
+
+Generalized Linear Model 
+
+4624 samples
+   6 predictor
+
+No pre-processing
+Resampling: Bootstrapped (25 reps) 
+Summary of sample sizes: 4624, 4624, 4624, 4624, 4624, 4624, ... 
+Resampling results:
+
+  RMSE        Rsquared   MAE       
+  0.06045091  0.8501321  0.04554867
+
+
 
 ```{r eval=FALSE}
 bwplot(resamples(vote_stack$models), metric = "RMSE")
