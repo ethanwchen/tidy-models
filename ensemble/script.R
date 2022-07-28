@@ -26,8 +26,8 @@ library(caretEnsemble)
 tidymodels_prefer()
 set.seed(42)
 
-train <- read_csv("ensemble/train.csv")
-test <- read_csv("ensemble/test.csv")
+train <- read_csv("train.csv")
+test <- read_csv("test.csv")
 test$percent_dem <- test$id
 train <- rename(train, Id = "id")
 test <- rename(test, Id = "id")
