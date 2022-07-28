@@ -85,11 +85,11 @@ stacked_model <- caretList(
     tuneList = list(
         xgb = caretModelSpec(method = "xgbTree", tuneGrid = xgbTreeGrid),
         svm = caretModelSpec(method = "svmRadial", tuneGrid = svmGrid),
-        glmnet = caretModelSpec(method = "glmnet", tuneGrid = glmnetGrid),
-        rf = caretModelSpec(method = "ranger", tuneGrid = rfGrid),
-        enet = caretModelSpec(method = "enet", tuneGrid = enetGrid),
+        glmnet = caretModelSpec(method = "glmnet", tuneGrid = glmnetGrid)
+        # rf = caretModelSpec(method = "ranger", tuneGrid = rfGrid),
+        # enet = caretModelSpec(method = "enet", tuneGrid = enetGrid),
         # bayeRidge = caretModelSpec(method = "blassoAveraged"),
-        gauss = caretModelSpec(method = "gaussprRadial", tuneGrid = gauss_Grid)
+        # gauss = caretModelSpec(method = "gaussprRadial", tuneGrid = gauss_Grid)
         # krls = caretModelSpec(method = "krlsRadial", tuneGrid = krls_Grid)
     )
 )
@@ -102,6 +102,6 @@ vote_stack <- caretEnsemble(stacked_model)
 vote_pred <- predict(vote_stack, newdata = vote_testing) %>%
     bind_cols(vote_testing) %>%
     select(Id = Id, Predicted = ...1)
-write.csv(vote_pred, file = "dalle.csv", row.names = FALSE)
+write.csv(vote_pred, file = "clip.csv", row.names = FALSE)
 
 print(head(vote_pred, 10))
