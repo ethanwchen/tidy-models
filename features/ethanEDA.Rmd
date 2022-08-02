@@ -1,0 +1,281 @@
+# Data Cleaning
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidymodels)
+tidymodels_prefer()
+## Full clean
+## GENERAL INFORMATION
+train <- read_csv("train.csv")
+trainingCoreData =cbind(train["id"], train["percent_dem"], train["total_votes"], train["0001E"])
+names(trainingCoreData) = c("Id", "percent_dem", "Votes","Pop")
+trainingCoreData = tibble(trainingCoreData)
+trainingCoreData$percent_dem = trainingCoreData$percent_dem * 100
+## AGE
+train <- read_csv("train.csv")
+names <- colnames(train)
+trainingAge <- train %>%
+  mutate(male = .[[5]]/.[[4]]) %>%
+  mutate(age0 = .[[36]]/.[[4]]) %>%
+  mutate(age20 = .[[17]]/.[[4]]) %>%
+  mutate(age25 = .[[19]]/.[[4]]) %>%
+  mutate(age35 = .[[21]]/.[[4]]) %>%
+  mutate(age45 = .[[23]]/.[[4]]) %>%
+  mutate(age55 = .[[25]]/.[[4]]) %>%
+  mutate(age60 = .[[27]]/.[[4]]) %>%
+  mutate(age65 = .[[29]]/.[[4]]) %>%
+  mutate(age75 = .[[31]]/.[[4]]) %>%
+  mutate(age85 = .[[33]]/.[[4]]) %>%
+  mutate(age18 = 1 - age0 - age20 - age25 - age35 - age45 -
+                 age55 - age60 - age65 - age75 - age85) %>%
+  select(male, age0, age18, age20, age25, age35,
+         age45, age55, age60, age65, age75, age85)
+trainingAge = trainingAge*100
+## RACE PART 1 
+train <- read.csv('train.csv')
+train2 <- train[c('X0001E','X0036E','X0037E','X0038E','X0040E','X0041E','X0042E','X0043E','X0039E','X0045E','X0046E','X0047E','X0048E')] 
+train2 <- train2 %>% mutate(train2, white = 100 * X0037E / X0001E,
+                          black = 100 * X0038E / X0001E,
+                          indCher = 100 * X0040E / X0001E,
+                          indChip = 100 * X0041E / X0001E,
+                          indNava = 100 * X0042E / X0001E,
+                          indSiou = 100 * X0043E / X0001E,
+                          indOther = 100 * (X0039E - (X0040E + X0041E + X0042E + X0043E)) / X0001E, indian = 100 * X0045E / X0001E,
+                          chin = 100 * X0046E / X0001E,
+                          fil = 100 * X0047E / X0001E,
+                          jap = 100 * X0048E / X0001E)
+trainingRacePt1 <- train2[14:24]
+## RACE PART 2
+train <- read.csv('train.csv')
+trainingRacePt2 <- train %>%
+  mutate(kor = .[[92]]/.[[4]]) %>%
+  mutate(viet = .[[94]]/.[[4]]) %>%
+  mutate(asianOther = .[[96]]/.[[4]]) %>%
+  mutate(natHawaii = .[[100]]/.[[4]]) %>%
+  mutate(natCha = .[[102]]/.[[4]]) %>%
+  mutate(natSamoan = .[[104]]/.[[4]]) %>%
+  mutate(natOther = .[[106]]/.[[4]]) %>%
+  mutate(raceOther = .[[108]]/.[[4]]) %>%
+  mutate(twoBlack = .[[112]]/.[[4]]) %>%
+  mutate(twoNative = .[[114]]/.[[4]]) %>%
+  mutate(twoAsian = .[[116]]/.[[4]]) %>%
+  mutate(twoBlackNative = .[[118]]/.[[4]]) %>%
+  mutate(twoOther = .[[110]]/.[[4]] - twoBlack - twoNative - twoAsian - twoBlackNative) %>% 
+  select(kor, viet, asianOther, natHawaii, natCha, natSamoan,
+         natOther, raceOther, twoBlack, twoNative, twoAsian, twoBlackNative, twoOther)
+trainingRacePt2 = trainingRacePt2*100
+trainingRacePt2
+## EDUCATION 
+train <- read_csv("train.csv")
+TotalPop = train["C01_001E"] + train["C01_006E"]
+# % Less than high school graduate
+nohighschool = train["C01_002E"]/TotalPop + train["C01_007E"]/TotalPop + train["C01_008E"]/TotalPop
+# High school graduate (includes equivalency)
+highschool = train["C01_003E"]/TotalPop + train["C01_009E"]/TotalPop
+# Some college or associate's degree
+somecollege = train["C01_004E"]/TotalPop + train["C01_010E"]/TotalPop + train["C01_011E"]/TotalPop
+# Bachelor's degree or higher
+bachelorsorhigher = train["C01_005E"]/TotalPop + train["C01_012E"]/TotalPop + train["C01_013E"]/TotalPop
+trainingEdu = cbind(nohighschool,highschool,somecollege,bachelorsorhigher)
+names(trainingEdu) = c("nohighschool", "highschool", "somecollege", "bachelorsorhigher")
+trainingEdu = tibble(trainingEdu)
+trainingEdu = trainingEdu*100
+finalTrain = tibble(cbind(trainingCoreData, trainingAge, trainingRacePt1, trainingRacePt2, trainingEdu))
+round(finalTrain,8)
+train <- finalTrain
+```
+
+# Exploring potential relationships between variables
+```{r}
+glimpse(train)
+fit.train <- lm(percent_dem~.-Id-Votes, data = train)
+fit.train
+summary(fit.train)
+```
+
+# Using a correlogram
+
+```{r}
+# Correlation matrix of all data
+corTrain = cor(train[2:44])
+library(ggcorrplot)
+
+ggcorrplot(corTrain, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = .001, method="square", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of variables")
+
+# Cor setup
+corAge <- cor(trainingAge)
+corRace1 <- cor(trainingRacePt1)
+corRace2 <- cor(trainingRacePt2)
+corEdu <- cor(trainingEdu)
+
+# Creating correlation tests
+
+# Correlation testing age categories
+cor0 <- cor.test(train$age0, train$percent_dem)
+cor18 <- cor.test(train$age18, train$percent_dem)
+cor20 <- cor.test(train$age20, train$percent_dem)
+cor25 <- cor.test(train$age25, train$percent_dem)
+cor35 <- cor.test(train$age35, train$percent_dem)
+cor45 <- cor.test(train$age45, train$percent_dem)
+cor55 <- cor.test(train$age55, train$percent_dem)
+cor60 <- cor.test(train$age60, train$percent_dem)
+cor65 <- cor.test(train$age65, train$percent_dem)
+cor75 <- cor.test(train$age75, train$percent_dem)
+cor85 <- cor.test(train$age85, train$percent_dem)
+
+# Correlation testing white and black races
+corWhite <- cor.test(train$white, train$percent_dem)
+corBlack <- cor.test(train$black, train$percent_dem)
+
+# Correlation testing asian race subcategories
+corIndian <- cor.test(train$indian, train$percent_dem)
+corChin <- cor.test(train$chin, train$percent_dem)
+corFil <- cor.test(train$fil, train$percent_dem)
+corJap <- cor.test(train$jap, train$percent_dem)
+corKor <- cor.test(train$kor, train$percent_dem)
+corViet <- cor.test(train$viet, train$percent_dem)
+corAsianOther <- cor.test(train$asianOther, train$percent_dem)
+
+#Creating correlograms
+ggcorrplot(corAge, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = .001, method="square", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of age variables")
+
+ggcorrplot(corRace1, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = .001, method="square", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of race1 variables")
+
+ggcorrplot(corRace2, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = .001, method="square", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of race2 variables")
+
+ggcorrplot(corEdu, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = .001, method="square", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of education variables")
+```
+
+# Testing correlation for each variable individually
+
+```{r}
+cor0
+cor18
+cor20
+cor25
+cor35
+cor45
+cor55
+cor60
+cor65
+cor75
+cor85
+corWhite
+corBlack
+corIndian
+corChin
+corFil
+corJap
+corKor
+corViet
+corAsianOther
+```
+
+# Plotting out correlation
+```{r}
+#By age
+ggplot(train, aes(x = age0, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age18, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age20, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age25, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age35, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age45, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age55, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age60, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age65, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age75, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = age85, y = percent_dem)) +
+  geom_hex(bins = 100)
+
+#By race
+ggplot(train, aes(x = white, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = black, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = indCher, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = indChip, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = indNava, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = indSiou, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = indian, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = chin, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = fil, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = jap, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = kor, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = viet, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = asianOther, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = natHawaii, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = natCha, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = natSamoan, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = natOther, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = raceOther, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = twoBlack, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = twoNative, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = twoAsian, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = twoBlackNative, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = twoOther, y = percent_dem)) +
+  geom_hex(bins = 100)
+
+ggplot(train, aes(x = nohighschool, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = highschool, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = somecollege, y = percent_dem)) +
+  geom_hex(bins = 100)
+ggplot(train, aes(x = bachelorsorhigher, y = percent_dem)) +
+  geom_hex(bins = 100)
+```
+
+# Counting values
+
+```{r}
+trainingAge %>% keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram(bins=100)
+trainingRacePt1 %>% keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram(bins=100)
+trainingRacePt2 %>% keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram(bins=100)
+trainingEdu %>% keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram(bins=100)
+```

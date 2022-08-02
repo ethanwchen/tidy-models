@@ -1,0 +1,85 @@
+---
+title: "Stats 101C"
+author: "Austin Pham"
+date: "Summer 2022"
+output:
+  pdf_document: default
+---
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(dlookr)
+tidymodels_prefer()
+```
+
+```{r}
+train <- read_csv("./data/train.csv")
+names <- colnames(train)
+```
+
+```{r}
+age <- train %>%
+  mutate(male = .[[5]]/.[[4]]) %>%
+  mutate(age0 = .[[36]]/.[[4]]) %>%
+  mutate(age20 = .[[17]]/.[[4]]) %>%
+  mutate(age25 = .[[19]]/.[[4]]) %>%
+  mutate(age35 = .[[21]]/.[[4]]) %>%
+  mutate(age45 = .[[23]]/.[[4]]) %>%
+  mutate(age55 = .[[25]]/.[[4]]) %>%
+  mutate(age60 = .[[27]]/.[[4]]) %>%
+  mutate(age65 = .[[29]]/.[[4]]) %>%
+  mutate(age75 = .[[31]]/.[[4]]) %>%
+  mutate(age85 = .[[33]]/.[[4]]) %>%
+  mutate(age18 = 1 - age0 - age20 - age25 - age35 - age45 -
+                 age55 - age60 - age65 - age75 - age85) %>%
+  select(male, age0, age18, age20, age25, age35,
+         age45, age55, age60, age65, age75, age85)
+```
+
+We see that male is a more exact representation of the percentage.
+
+```{r}
+head(train$"0002PE")
+head(age$male)
+cor(train$"0002PE", age$male)
+```
+
+We see that age0 is a more exact representation of the percentage.
+
+```{r}
+head(train$"0019PE")
+head(age$age0)
+cor(train$"0019PE", age$age0)
+```
+We see that age20 is a more exact representation of the percentage.
+
+```{r}
+head(train$"0009PE")
+head(age$age20)
+cor(train$"0009PE", age$age20)
+```
+
+We see that age55 is a more exact representation of the percentage.
+
+```{r}
+head(train$"0013PE")
+head(age$age55)
+cor(train$"0013PE", age$age55)
+```
+
+We see that age75 is a more exact representation of the percentage.
+
+```{r}
+head(train$"0016PE")
+head(age$age75)
+cor(train$"0016PE", age$age75)
+```
+
+We see that the total sum approximates 1.
+
+```{r}
+age %>%
+  mutate(sum = rowSums(.[2:11])) %>%
+  select(sum)
+```
