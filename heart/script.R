@@ -4,6 +4,13 @@ library(stacks)
 library(ggplot2)
 library(xgboost)
 
+# NOTE: We are reproduce the same values in our submission “second.csv” 
+# that was submitted on July 26th. This recording provides proof of our
+# ability to recreate this submission. It seems to only work on a MacOS system, 
+# similar to what happened to us in the first Kaggle competition. 
+# We included a recording, showing our final CSV, to prove reproducibility. 
+
+
 train <- read_csv("heart_train.csv")
 # which(train$thal == '?')
 # replace question marks with NA
