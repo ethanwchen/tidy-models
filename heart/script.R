@@ -6,8 +6,11 @@ library(xgboost)
 
 train <- read_csv("heart_train.csv")
 # which(train$thal == '?')
+# replace question marks with NA
 train$thal[6] = NA
 train$thal[109] = NA
+
+# convert into factors
 train$num <- as.factor(train$num)
 train$sex <- as.factor(train$sex)
 train$cp <- as.factor(train$cp)
@@ -29,8 +32,11 @@ test$slope <- as.factor(test$slope)
 test$thal <- as.factor(test$thal)
 test$ca <- as.numeric(test$ca)
 
+# create training split
 set.seed(49)
 heart_folds <- vfold_cv(train, v = 10, repeats = 2)
+
+# create recipe for all the models
 heart_rec <- recipe(num ~ ., data = train) %>%
     step_impute_knn(all_predictors(), neighbors = 5) %>%
     update_role(id, new_role = "id_variable") %>%
@@ -41,6 +47,7 @@ heart_rec <- recipe(num ~ ., data = train) %>%
 heart_wflow <- workflow() %>% add_recipe(heart_rec)
 ctrl_grid <- control_stack_grid()
 
+# create rf tuning grid with ranger
 rf_spec <- 
   rand_forest(
     mtry = tune(),
@@ -60,6 +67,7 @@ rf_res <-
     control = ctrl_grid
   )
 
+# create nn tuning grid with nnet
 nnet_spec <-
   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) %>%
   set_engine("nnet") %>%
@@ -78,6 +86,7 @@ nnet_res <-
     control = ctrl_grid
   )
 
+# create xgb tuning grid with xgb_spec
 xgb_spec <- 
   boost_tree(mtry = tune(), tree_depth = tune()) %>% 
   set_engine("xgboost") %>% 
@@ -93,6 +102,7 @@ xgb_res <-
     control = ctrl_grid
   )
 
+# create knn tuning grid with kknn
 knn_spec <- 
   nearest_neighbor(neighbors = tune(), weight_func = "gaussian", dist_power = tune()) %>%
   set_engine("kknn") %>% 
@@ -108,6 +118,7 @@ knn_res <-
     control = ctrl_grid
   )
 
+# create ensemble method of all 4 models
 heart_stack <- 
   stacks() %>%
   add_candidates(rf_res) %>%
@@ -117,6 +128,7 @@ heart_stack <-
   blend_predictions() %>%
   fit_members()
 
+# create predictions and write to second.csv
 heart_pred <- predict(heart_stack, test) %>%
     bind_cols(test) %>%
     select(id = id, Predicted = .pred_class)
