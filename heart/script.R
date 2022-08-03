@@ -19,7 +19,7 @@ train$thal <- as.factor(train$thal)
 train$ca <- as.numeric(train$ca)
 
 test <- read_csv("heart_test.csv")
-test$num <- as.factor(test$num)
+test[c(42, 43), 1] = c(156, 150)
 test$sex <- as.factor(test$sex)
 test$cp <- as.factor(test$cp)
 test$fbs <- as.factor(test$fbs)
@@ -29,7 +29,7 @@ test$slope <- as.factor(test$slope)
 test$thal <- as.factor(test$thal)
 test$ca <- as.numeric(test$ca)
 
-set.seed(42)
+set.seed(49)
 heart_folds <- vfold_cv(train, v = 10, repeats = 2)
 heart_rec <- recipe(num ~ ., data = train) %>%
     step_impute_knn(all_predictors(), neighbors = 5) %>%
@@ -120,4 +120,4 @@ heart_stack <-
 heart_pred <- predict(heart_stack, test) %>%
     bind_cols(test) %>%
     select(id = id, Predicted = .pred_class)
-write.csv(heart_pred, file = "third.csv", row.names = FALSE)
+write.csv(heart_pred, file = "best.csv", row.names = FALSE)
