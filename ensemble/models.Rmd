@@ -14,55 +14,41 @@ params:
 ---
 
 ```{r, echo = FALSE, message = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, fig.align = "center")
-library(conflicted)
-library(tidymodels)
-library(workflows)
-library(tune)
-library(readr)
-library(forcats)
-library(doFuture)
-library(caret)
-library(caretEnsemble)
-library(patchwork)
-library(tabnet)
-library(xgboost)
-library(dlookr)
 library(tidyverse)
 library(tidymodels)
-library(vip)
-library(skimr)
-library(skimr)
-library(timetk)
-library(ranger)
-library(kernlab)
-library(tictoc)
-library(rpart)
-library(CORElearn)
+library(caret)
 library(caretEnsemble)
+library(xgboost)
+library(ranger)
+library(rpart)
+library(dlookr)
+library(MLmetrics)
 tidymodels_prefer()
-theme_set(theme_light())
 set.seed(42)
 ```
 
 Let's read in our data
 
 ```{r}
-train <- read_csv("ensemble/train.csv")
-test <- read_csv("ensemble/test.csv")
-test$percent_dem <- test$id
-train <- rename(train, Id = "id")
-test <- rename(test, Id = "id")
-train <- rename(train, target = "percent_dem")
-test <- rename(test, target = "percent_dem")
+train <- read_csv("heart/heart_train.csv")
+test <- read_csv("heart/heart_test.csv")
+test$num <- test$id
+```
+############
+EDA
+
+```{r eval = FALSE}
+train %>%
+  eda_web_report(target = "num", output_dir = "./", output_file = "EDA.html", theme = "blue")
+train %>%
+  eda_paged_report(target = "num", output_dir = "./", output_file = "EDA.pdf", theme = "blue")
 ```
 
 Lets remove some outliers and missing data from our training.
 
 ```{r}
-outliers <- c(57, 439, 461, 693, 863, 936, 1236, 1254, 1305, 1380, 1709, 1727, 1847, 2027, 2104, 2132, 2643, 2980)
-train <- train[!train$Id %in% outliers, ]
-train <- train[-c(1322), ] # remove NA
+outliers <- c()
+train <- train[!train$id %in% outliers, ]
 ```
 
 Set our training/testing sets.
@@ -70,7 +56,7 @@ Set our training/testing sets.
 ```{r}
 nTrain <- nrow(train)
 nTest <- nrow(test)
-vote_df <- rbind(train, test)
+heart_df <- rbind(train, test)
 ```
 
 Our recipe will:
@@ -80,22 +66,23 @@ Our recipe will:
 3. Create few higher-order terms for non-linear relationships
 
 ```{r}
-vote_df2 <- recipe(target ~ ., data = vote_df) %>%
-  update_role(Id, new_role = "id_variable") %>%
+heart_df2 <- recipe(num ~ ., data = heart_df) %>%
+  update_role(id, new_role = "id_variable") %>%
   step_zv(all_predictors()) %>% 
-  step_YeoJohnson(all_predictors()) %>%
-  step_normalize(all_predictors()) %>%
+  step_YeoJohnson(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>%
   prep() %>%
   juice()
 
-vote_training <- head(vote_df2, nTrain)
-vote_testing_raw <- tail(vote_df2, nTest) %>% select(-target)
+heart_training <- head(heart_df2, nTrain)
+heart_testing_raw <- tail(heart_df2, nTest)
 ```
 
 Correlation Plots
 
 ```{r eval=FALSE}
-cor <- correlate(vote_training) %>%
+cor <- correlate(heart_training) %>%
   arrange(coef_corr) %>%
   slice(which(row_number() %% 2 == 1))
 view(cor)
@@ -104,9 +91,7 @@ view(cor)
 Variable Importance with Random Forests
 
 ```{r eval=FALSE}
-rf_plot <- vote_training
-names(rf_plot) <- paste("rf", names(rf_plot), sep = "_")
-rf_res1 <- ranger(rf_target ~ . - rf_Id, , data = rf_plot, importance = "impurity_corrected")
+rf_res1 <- ranger(num ~ . - id, , data = heart_training, importance = "impurity_corrected")
 importance(rf_res1) %>% 
   enframe("Variable", "Importance") %>%
   arrange(desc(Importance)) %>%
@@ -117,17 +102,17 @@ importance(rf_res1) %>%
 Finalize the recipe
 
 ```{r}
-tmp_rec1 <- recipe(target ~ ., data = vote_training) %>%
-    step_rm(Id) %>%
-    step_zv(all_predictors()) %>%
-    step_YeoJohnson(all_predictors()) %>%
-    step_normalize(all_predictors())
+tmp_rec1 <- recipe(num ~ ., data = heart_training) %>%
+    step_rm(id) %>%
+    step_zv(all_predictors()) %>% 
+    step_YeoJohnson(all_numeric_predictors()) %>%
+    step_normalize(all_numeric_predictors())
 
-tmp_rec2 <- recipe(target ~ ., data = vote_training) %>%
-    update_role(Id, new_role = "id_variable") %>%
-    step_zv(all_predictors()) %>%
-    step_YeoJohnson(all_predictors()) %>%
-    step_normalize(all_predictors())
+tmp_rec2 <- recipe(num ~ ., data = heart_training) %>%
+    update_role(id, new_role = "id_variable") %>%
+    step_zv(all_predictors()) %>% 
+    step_YeoJohnson(all_numeric_predictors()) %>%
+    step_normalize(all_numeric_predictors())
 
 tmp_rec1 %>%
     check_missing(all_predictors()) %>%
@@ -140,24 +125,27 @@ Inputs:
 
       role #variables
    outcome          1
- predictor        111
+ predictor         19
 
-Training data contained 2331 data points and no missing data.
+Training data contained 227 data points and no missing data.
 
 Operations:
 
-Variables removed Id [trained]
+Variables removed id [trained]
 Zero variance filter removed <none> [trained]
-Yeo-Johnson transformation on male, female, age0, age5, age10, age15, age20, age25, age3... [trained]
-Centering and scaling for male, female, age0, age5, age10, age15, age20, age25, age35, age45,... [trained]
-Check missing values for male, female, age0, age5, age10, age15, age20, age25, age35, age45,... [trained]
+Yeo-Johnson transformation on age, trestbps, chol, thalach, oldpeak [trained]
+Centering and scaling for age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpea... [trained]
+Dummy variables from <none> [trained]
+Check missing values for age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpea... [trained]
 
 
 ```{r}
-vote_rec1 <- prep(tmp_rec1)
-vote_rec2 <- prep(tmp_rec2)
-vote_juiced <- juice(vote_rec1)
-vote_testing <- bake(vote_rec2, vote_testing_raw)
+heart_rec1 <- prep(tmp_rec1)
+heart_rec2 <- prep(tmp_rec2)
+heart_juiced <- juice(heart_rec1)
+heart_juiced$num <- as.factor(heart_juiced$num)
+levels(heart_juiced$num) <- c("good", "bad")
+heart_testing <- bake(heart_rec2, heart_testing_raw)
 ```
 
 Let's create an ensemble model. Predictions are made from several tuned models on the entire training data set. We create a new data set with three variables (one prediction from each of the models). These variables are used as predictors for the output and the new ensemble model is trained on this data set.
@@ -166,216 +154,192 @@ To predict on testing data, we 1) predict testing data using the individual mode
 
 
 ```{r}
-set.seed(4312)
+set.seed(42)
 trControl <- trainControl(
-    method = "cv",
+    method = "repeatedcv",
     savePredictions = "final",
-    index = createMultiFolds(vote_juiced$target, k = 10, times = 2),
+    index = createMultiFolds(heart_juiced$num, k = 10, times = 3),
     allowParallel = TRUE,
-    verboseIter = TRUE
+    verboseIter = TRUE,
+    summaryFunction = prSummary,
+    classProbs = TRUE
 )
 ```
 
 ####################################
-MODEL 1: xgbTree (eXtreme Gradient Boosting) 
+MODEL 1: knn (k-Nearest Neighbors ) 
 ####################################
 
-eXtreme Gradient Boosting 
-
-2312 samples
- 213 predictor
+227 samples
+ 18 predictor
+  2 classes: 'good', 'bad' 
 
 No pre-processing
-Resampling: Cross-Validated (10 fold) 
-Summary of sample sizes: 2080, 2080, 2082, 2081, 2081, 2081, ... 
+Resampling: Cross-Validated (10 fold, repeated 1 times) 
+Summary of sample sizes: 203, 205, 205, 205, 204, 205, ... 
 Resampling results across tuning parameters:
 
-   max_depth colsample_bytree min_child_weight subsample nrounds       RMSE
-7          6            0.625                4       0.5    2000 0.06282319
-1          4            0.500                4       0.5    2000 0.06282756
-3          4            0.750                4       0.5    2000 0.06297950
-4          4            0.875                4       0.5    2000 0.06312865
-5          4            1.000                4       0.5    2000 0.06317782
-8          6            0.750                4       0.5    2000 0.06319506
-9          6            0.875                4       0.5    2000 0.06323865
-10         6            1.000                4       0.5    2000 0.06328220
-2          4            0.625                4       0.5    2000 0.06334981
-6          6            0.500                4       0.5    2000 0.06338109
-12         8            0.625                4       0.5    2000 0.06363014
-14         8            0.875                4       0.5    2000 0.06384987
-17        10            0.625                4       0.5    2000 0.06388951
-13         8            0.750                4       0.5    2000 0.06389628
-11         8            0.500                4       0.5    2000 0.06392901
+    k       AUC Precision    Recall         F
+14 14 0.6799454 0.8241068 0.8833333 0.8487065
+11 11 0.5947830 0.8351968 0.8724359 0.8486986
+13 13 0.6691279 0.8279962 0.8752137 0.8469970
+12 12 0.6356578 0.8317723 0.8722222 0.8466209
+7   7 0.4909407 0.8292461 0.8662393 0.8437626
+10 10 0.5818076 0.8238112 0.8694444 0.8412263
+5   5 0.4351146 0.8287730 0.8615385 0.8401439
+8   8 0.5262362 0.8263205 0.8636752 0.8399762
+9   9 0.5735760 0.8229216 0.8664530 0.8398543
+16 16 0.7082583 0.8169418 0.8696581 0.8376258
+20 20 0.7373510 0.8095456 0.8777778 0.8369976
+4   4 0.3887784 0.8296720 0.8536325 0.8367458
+15 15 0.6971120 0.8146341 0.8645299 0.8333997
+18 18 0.7220310 0.8076400 0.8696581 0.8324705
+19 19 0.7198843 0.8035748 0.8722222 0.8315520
 
-Tuning parameter 'nrounds' was held constant at a value of 2000
-Tuning parameter 'eta' was
-
-Tuning parameter 'min_child_weight' was held constant at a value of 4
-Tuning parameter
- 'subsample' was held constant at a value of 0.5
-RMSE was used to select the optimal model using the smallest value.
-The final values used for the model were nrounds = 2000, max_depth = 6, eta = 0.02, gamma =
- 0, colsample_bytree = 0.625, min_child_weight = 4 and subsample = 0.5.
+F was used to select the optimal model using the largest value.
+The final value used for the model was k = 14.
 
 ```{r eval=FALSE}
-xgbTreeGrid <- expand.grid(
-    nrounds = 2000,
-    max_depth = c(4, 6, 8, 10),
-    eta = 0.02,
-    gamma = 0,
-    colsample_bytree = seq(0.5, 1, length.out = 5),
-    subsample = 0.5,
-    min_child_weight = 4)
-xgbTree_model <- caretList(
-    target ~ ., data = vote_juiced,
+knnGrid <- expand.grid(
+    k = seq(1, 20, length.out = 20))
+knnModel <- caretList(
+    num ~ ., data = heart_juiced,
     trControl = trControl,
-    metric = "RMSE",
+    metric = "F",
     tuneList = list(
-        xgb = caretModelSpec(method = "xgbTree", tuneGrid = xgbTreeGrid)
+        logitBoost = caretModelSpec(method = "knn", tuneGrid = knnGrid)
     )
 )
-head(xgbTree_model$xgb$results[order(xgbTree_model$xgb$results$RMSE),c(2,4:8)], 15)
+logitBoostModel
+head(knnModel$logitBoost$results[order(knnModel$logitBoost$results$F, decreasing = TRUE),1:5], 10)
 ```
 
 ####################################
 MODEL 2: svmRadial (Support Vector Machines with Radial Basis Function Kernel)
 ####################################
 
-Support Vector Machines with Radial Basis Function Kernel 
-
-2312 samples
- 213 predictor
+227 samples
+ 18 predictor
+  2 classes: 'good', 'bad' 
 
 No pre-processing
-Resampling: Cross-Validated (10 fold) 
-Summary of sample sizes: 2080, 2080, 2082, 2081, 2081, 2081, ... 
+Resampling: Cross-Validated (10 fold, repeated 1 times) 
+Summary of sample sizes: 203, 205, 205, 205, 204, 205, ... 
 Resampling results across tuning parameters:
 
-          sigma   C       RMSE
-1  0.0008000000 100 0.06819234
-2  0.0008000000 114 0.06848837
-4  0.0009333333 100 0.06881245
-3  0.0008000000 128 0.06884455
-5  0.0009333333 114 0.06931182
-7  0.0010666667 100 0.06964079
-6  0.0009333333 128 0.06982645
-8  0.0010666667 114 0.07024468
-10 0.0012000000 100 0.07046148
-9  0.0010666667 128 0.07082260
-11 0.0012000000 114 0.07106632
-12 0.0012000000 128 0.07158540
+          sigma   C       AUC Precision    Recall         F
+10 3.010101e-05 200 0.8376480 0.8462949 0.8773504 0.8566919
+12 5.020202e-05 125 0.8379840 0.8462949 0.8773504 0.8566919
+13 5.020202e-05 150 0.8385122 0.8462949 0.8773504 0.8566919
+37 1.507071e-04 125 0.8341701 0.8423215 0.8801282 0.8561961
+21 9.040404e-05 100 0.8351136 0.8419745 0.8801282 0.8560910
+9  3.010101e-05 175 0.8368334 0.8440221 0.8773504 0.8556050
+11 5.020202e-05 100 0.8370924 0.8440221 0.8773504 0.8556050
+41 1.708081e-04 100 0.8360802 0.8438082 0.8773504 0.8554039
+14 5.020202e-05 175 0.8358219 0.8432646 0.8775641 0.8553964
+36 1.507071e-04 100 0.8365871 0.8431896 0.8773504 0.8553416
 
-RMSE was used to select the optimal model using the smallest value.
-The final values used for the model were sigma = 8e-04 and C = 100.
+F was used to select the optimal model using the largest value.
+The final values used for the model were sigma = 5.020202e-05 and C = 125.
 
 ```{r eval=FALSE}
 svmGrid <- expand.grid(
-    sigma = seq(0.0008, 0.0012, length.out = 4),
-    C = seq(100, 128, length.out = 3))
-svm_model <- caretList(
-    target ~ ., data = vote_juiced,
+    sigma = seq(0.00001, 0.002, length.out = 100),
+    C = seq(100, 200, length.out = 5))
+svmModel <- caretList(
+    num ~ ., data = heart_juiced,
     trControl = trControl,
-    metric = "RMSE",
+    metric = "F",
     tuneList = list(
         svm = caretModelSpec(method = "svmRadial", tuneGrid = svmGrid)
     )
 )
-head(svm_model$svm$results[order(svm_model$svm$results$RMSE),1:3], 15)
+head(svmModel$svm$results[order(svmModel$svm$results$F, decreasing = TRUE),1:6], 10)
 ```
 
 ####################################
 MODEL 3: glmnet (Lasso and Elastic-Net Regularized Generalized Linear Models)
 ####################################
 
-glmnet 
-
-2312 samples
- 213 predictor
+227 samples
+ 18 predictor
+  2 classes: 'good', 'bad' 
 
 No pre-processing
-Resampling: Cross-Validated (10 fold) 
-Summary of sample sizes: 2080, 2080, 2082, 2081, 2081, 2081, ... 
+Resampling: Cross-Validated (10 fold, repeated 1 times) 
+Summary of sample sizes: 203, 205, 205, 205, 204, 205, ... 
 Resampling results across tuning parameters:
 
-   alpha       lambda       RMSE  Rsquared
-16  1.00 1.232847e-04 0.07144448 0.7923810
-15  1.00 1.105149e-04 0.07148570 0.7921851
-12  0.95 1.232847e-04 0.07149542 0.7921349
-4   0.85 1.232847e-04 0.07150308 0.7920678
-8   0.90 1.232847e-04 0.07150382 0.7920700
-11  0.95 1.105149e-04 0.07153985 0.7919266
-14  1.00 9.774513e-05 0.07154648 0.7918844
-3   0.85 1.105149e-04 0.07154817 0.7918748
-7   0.90 1.105149e-04 0.07155305 0.7918245
-10  0.95 9.774513e-05 0.07159763 0.7916420
-2   0.85 9.774513e-05 0.07160230 0.7916379
-6   0.90 9.774513e-05 0.07161733 0.7915157
-13  1.00 8.497534e-05 0.07165439 0.7913771
-5   0.90 8.497534e-05 0.07168438 0.7912282
-9   0.95 8.497534e-05 0.07168529 0.7912366
+        alpha      lambda       AUC Precision    Recall         F
+60  0.5526316 0.010000000 0.8403399 0.8325864 0.8608974 0.8405455
+80  0.5789474 0.010000000 0.8403399 0.8325864 0.8608974 0.8405455
+99  0.6052632 0.009473737 0.8399909 0.8325864 0.8608974 0.8405455
+100 0.6052632 0.010000000 0.8400372 0.8325864 0.8608974 0.8405455
+119 0.6315789 0.009473737 0.8395279 0.8325864 0.8608974 0.8405455
+120 0.6315789 0.010000000 0.8399464 0.8325864 0.8608974 0.8405455
+139 0.6578947 0.009473737 0.8400372 0.8325864 0.8608974 0.8405455
+140 0.6578947 0.010000000 0.8399464 0.8325864 0.8608974 0.8405455
+158 0.6842105 0.008947474 0.8398160 0.8325864 0.8608974 0.8405455
+159 0.6842105 0.009473737 0.8397714 0.8325864 0.8608974 0.8405455
 
-RMSE was used to select the optimal model using the smallest value.
-The final values used for the model were alpha = 1 and lambda = 0.0001232847.
+F was used to select the optimal model using the largest value.
+The final values used for the model were alpha = 0.5526316 and lambda = 0.01.
 
 ```{r eval=FALSE}
 glmnetGrid <- expand.grid(
-    alpha = seq(0.85, 1, length.out = 4),
-    lambda = seq(8.497534e-05, 0.0001232847, length.out = 4))
+    alpha = seq(0.5, 1, length.out = 20),
+    lambda = seq(1e-06, 0.01, length.out = 20))
 glmnet_model <- caretList(
-    target ~ ., data = vote_juiced,
+    num ~ ., data = heart_juiced,
     trControl = trControl,
-    metric = "RMSE",
+    metric = "F",
     tuneList = list(
         glmnet = caretModelSpec(method = "glmnet", tuneGrid = glmnetGrid)
     )
 )
-head(glmnet_model$glmnet$results[order(glmnet_model$glmnet$results$RMSE),1:4], 15)
+head(glmnet_model$glmnet$results[order(glmnet_model$glmnet$results$F, decreasing = TRUE),1:6], 10)
 ```
 
 ####################################
 MODEL 4: ranger (Random Forest)
 ####################################
 
-Random Forest 
-
-2312 samples
- 213 predictor
+227 samples
+ 18 predictor
+  2 classes: 'good', 'bad' 
 
 No pre-processing
-Resampling: Cross-Validated (10 fold) 
-Summary of sample sizes: 2080, 2080, 2082, 2081, 2081, 2081, ... 
+Resampling: Cross-Validated (10 fold, repeated 1 times) 
+Summary of sample sizes: 203, 205, 205, 205, 204, 205, ... 
 Resampling results across tuning parameters:
 
-  mtry splitrule min.node.size       RMSE
-7   64  variance             2 0.07019780
-9   64  variance             6 0.07033081
-8   64  variance             4 0.07037421
-5   52  variance             4 0.07048135
-6   52  variance             6 0.07053440
-4   52  variance             2 0.07074304
-1   40  variance             2 0.07098718
-2   40  variance             4 0.07100097
-3   40  variance             6 0.07119625
+   mtry       AUC Precision    Recall         F
+1     1 0.8529410 0.8197632 0.8801282 0.8429047
+2     2 0.8458670 0.8137493 0.8608974 0.8302577
+3     4 0.8374491 0.8104607 0.8557692 0.8262167
+4     6 0.8346690 0.8075256 0.8559829 0.8244563
+6    10 0.8246158 0.8052126 0.8425214 0.8166352
+5     8 0.8267564 0.8018130 0.8448718 0.8166331
+10   50 0.8121732 0.8041861 0.8425214 0.8166277
+13   80 0.8202499 0.8005748 0.8455128 0.8165214
+12   70 0.8144949 0.7976951 0.8482906 0.8157958
+11   60 0.8169881 0.7936733 0.8480769 0.8141270
 
-Tuning parameter 'splitrule' was held constant at a value of variance
-RMSE was used to select the optimal model using the smallest value.
-The final values used for the model were mtry = 64, splitrule = variance and min.node.size = 2.
+F was used to select the optimal model using the largest value.
+The final value used for the model was mtry = 1.
 
 ```{r eval=FALSE}
 rfGrid <- expand.grid(
-    mtry = c(40, 52, 64),
-    splitrule = "variance",
-    min.node.size = c(2, 4, 6))
+    mtry = c(1, 2, 4, 6, 8, seq(10, 100, 10)))
 rf_model <- caretList(
-    target ~ ., data = vote_juiced,
+    num ~ ., data = heart_juiced,
     trControl = trControl,
-    metric = "RMSE",
+    metric = "F",
     tuneList = list(
-        rf = caretModelSpec(method = "ranger", tuneGrid = rfGrid)
+        rf = caretModelSpec(method = "rf", tuneGrid = rfGrid)
     )
 )
-head(rf_model$rf$results[order(rf_model$rf$results$RMSE),1:4], 15)
-
+head(rf_model$rf$results[order(rf_model$rf$results$F, decreasing = TRUE),1:5], 10)
 ```
 
 ####################################
@@ -413,18 +377,23 @@ RMSE was used to select the optimal model using the smallest value.
 The final values used for the model were fraction = 1 and lambda = 0.05555556.
 
 ```{r eval=FALSE}
-enetGrid <- expand.grid(
-    fraction = seq(from = 0, to = 2, length.out = 10),
-    lambda = seq(from = 0, to = 0.5, length.out = 10))
-enet_model <- caretList(
-    target ~ ., data = vote_juiced,
+xgGrid <- expand.grid(
+    nrounds = c(10, 100, 10),
+    max_depth = seq(2, 8, 1),
+    eta = c(0.1, 0.2, 0.3),
+    gamma = 10^c(-1:3),
+    colsample_bytree = seq(0, 1, 0.2),
+    min_child_weight = 1,
+    subsample = 1)
+xg_model <- caretList(
+    num ~ ., data = heart_juiced,
     trControl = trControl,
-    metric = "RMSE",
+    metric = "F",
     tuneList = list(
-        enet = caretModelSpec(method = "enet", tuneGrid = enetGrid)
+        enet = caretModelSpec(method = "xgbTree", tuneGrid = xgGrid)
     )
 )
-head(enet_model$enet$results[order(enet_model$enet$results$RMSE),1:4], 15)
+
 ```
 
 ####################################

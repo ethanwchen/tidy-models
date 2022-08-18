@@ -1,18 +1,23 @@
-https://www.tidymodels.org/learn/work/bayes-opt/
-
-```{r}
 library(tidyverse)
 library(tidymodels)
 library(stacks)
 library(ggplot2)
 library(xgboost)
-```
 
-```{r}
-train <- read_csv("heart/heart_train.csv")
+# NOTE: We are reproduce the same values in our submission “second.csv” 
+# that was submitted on July 26th. This recording provides proof of our
+# ability to recreate this submission. It seems to only work on a MacOS system, 
+# similar to what happened to us in the first Kaggle competition. 
+# We included a recording, showing our final CSV, to prove reproducibility. 
+
+
+train <- read_csv("heart_train.csv")
 # which(train$thal == '?')
+# replace question marks with NA
 train$thal[6] = NA
 train$thal[109] = NA
+
+# convert into factors
 train$num <- as.factor(train$num)
 train$sex <- as.factor(train$sex)
 train$cp <- as.factor(train$cp)
@@ -23,8 +28,8 @@ train$slope <- as.factor(train$slope)
 train$thal <- as.factor(train$thal)
 train$ca <- as.numeric(train$ca)
 
-test <- read_csv("heart/heart_test.csv")
-test$num <- as.factor(test$num)
+test <- read_csv("heart_test.csv")
+test[c(42, 43), 1] = c(156, 150)
 test$sex <- as.factor(test$sex)
 test$cp <- as.factor(test$cp)
 test$fbs <- as.factor(test$fbs)
@@ -34,27 +39,11 @@ test$slope <- as.factor(test$slope)
 test$thal <- as.factor(test$thal)
 test$ca <- as.numeric(test$ca)
 
-# nTrain <- nrow(train)
-# nTest <- nrow(test)
-# heart_df <- rbind(train, test)
-
-str(train)
-str(test)
-```
-
-```{r}
-ggplot(train) + aes(x = age, y = sex, color = num) + geom_jitter()
-ggplot(train) + aes(x = cp, y = trestbps, color = num) + geom_jitter()
-ggplot(train) + aes(x = chol, y = fbs, color = num) + geom_jitter()
-ggplot(train) + aes(x = restecg, y = thalach, color = num) + geom_jitter()
-ggplot(train) + aes(x = exang, y = oldpeak, color = num) + geom_jitter()
-ggplot(train) + aes(x = slope, y = ca, color = num) + geom_jitter()
-```
-
-
-```{r}
-set.seed(42)
+# create training split
+set.seed(49)
 heart_folds <- vfold_cv(train, v = 10, repeats = 2)
+
+# create recipe for all the models
 heart_rec <- recipe(num ~ ., data = train) %>%
     step_impute_knn(all_predictors(), neighbors = 5) %>%
     update_role(id, new_role = "id_variable") %>%
@@ -62,14 +51,10 @@ heart_rec <- recipe(num ~ ., data = train) %>%
     step_zv(age, trestbps, chol, thalach, oldpeak, ca) %>%
     step_YeoJohnson(age, trestbps, chol, thalach, oldpeak, ca) %>%
     step_normalize(age, trestbps, chol, thalach, oldpeak, ca)
-juiced <- heart_rec %>% prep() %>% juice()
-heart_wflow <- 
-  workflow() %>% 
-  add_recipe(heart_rec)
+heart_wflow <- workflow() %>% add_recipe(heart_rec)
 ctrl_grid <- control_stack_grid()
-```
 
-```{r}
+# create rf tuning grid with ranger
 rf_spec <- 
   rand_forest(
     mtry = tune(),
@@ -88,9 +73,8 @@ rf_res <-
     grid = 10,
     control = ctrl_grid
   )
-```
 
-```{r}
+# create nn tuning grid with nnet
 nnet_spec <-
   mlp(hidden_units = tune(), penalty = tune(), epochs = tune()) %>%
   set_engine("nnet") %>%
@@ -108,26 +92,8 @@ nnet_res <-
     grid = 10,
     control = ctrl_grid
   )
-```
 
-```{r}
-log_spec <-
-  logistic_reg(penalty = tune(), mixture = tune()) %>%
-  set_engine("glm") %>%
-  set_mode("classification")
-log_wflow <- 
-  heart_wflow %>%
-  add_model(log_spec)
-log_res <-
-  tune_grid(
-    object = log_wflow,
-    resamples = heart_folds,
-    grid = 10,
-    control = ctrl_grid
-  )
-```
-
-```{r}
+# create xgb tuning grid with xgb_spec
 xgb_spec <- 
   boost_tree(mtry = tune(), tree_depth = tune()) %>% 
   set_engine("xgboost") %>% 
@@ -142,9 +108,8 @@ xgb_res <-
     grid = 10,
     control = ctrl_grid
   )
-```
 
-```{r}
+# create knn tuning grid with kknn
 knn_spec <- 
   nearest_neighbor(neighbors = tune(), weight_func = "gaussian", dist_power = tune()) %>%
   set_engine("kknn") %>% 
@@ -159,53 +124,19 @@ knn_res <-
     grid = 10,
     control = ctrl_grid
   )
-```
 
-```{r}
+# create ensemble method of all 4 models
 heart_stack <- 
   stacks() %>%
   add_candidates(rf_res) %>%
   add_candidates(nnet_res) %>%
-  # add_candidates(log_res) %>%
   add_candidates(xgb_res) %>%
   add_candidates(knn_res) %>%
-  # determine how to combine their predictions
   blend_predictions() %>%
-  # fit the candidates with nonzero stacking coefficients
   fit_members()
-```
 
-To make sure that we have the right trade-off between minimizing the number of members and optimizing performance, we can use the autoplot() method:
-
-```{r}
-autoplot(heart_stack)
-```
-
-To show the relationship more directly:
-
-```{r}
-autoplot(heart_stack, type = "members")
-```
-
-If these results were not good enough, blend_predictions() could be called again with different values of penalty. As it is, blend_predictions() picks the penalty parameter with the numerically optimal results. To see the top results:
-
-```{r}
-autoplot(heart_stack, type = "weights")
-```
-
-There are multiple facets since the ensemble members can have different effects on different classes.
-
-To identify which model configurations were assigned what stacking coefficients, we can make use of the collect_parameters() function:
-
-```{r}
-collect_parameters(heart_stack, "rf_res")
-```
-
-This object is now ready to predict with new data!
-
-```{r}
+# create predictions and write to second.csv
 heart_pred <- predict(heart_stack, test) %>%
     bind_cols(test) %>%
     select(id = id, Predicted = .pred_class)
-write.csv(heart_pred, file = "third.csv", row.names = FALSE)
-```
+write.csv(heart_pred, file = "best.csv", row.names = FALSE)
